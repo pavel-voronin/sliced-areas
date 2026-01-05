@@ -48,14 +48,16 @@ const handleLayoutChange = (detail: { layout: AreasLayout }) => {
 </script>
 
 <template>
-  <div class="demo-container">
-    <SlicedAreas
-      :layout="layout"
-      :resolver="resolveArea"
-      @layoutchange="handleLayoutChange"
-      class="demo-areas"
-    />
-  </div>
+  <ClientOnly>
+    <div class="demo-container">
+      <SlicedAreas
+        :layout="layout"
+        :resolver="resolveArea"
+        @layoutchange="handleLayoutChange"
+        class="demo-areas"
+      />
+    </div>
+  </ClientOnly>
 </template>
 
 <style scoped>

@@ -56,9 +56,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="demo-container">
-    <sliced-areas ref="areasRef" class="demo-areas" />
-  </div>
+  <ClientOnly>
+    <div class="demo-container">
+      <sliced-areas ref="areasRef" class="demo-areas" />
+    </div>
+  </ClientOnly>
 </template>
 
 <style scoped>

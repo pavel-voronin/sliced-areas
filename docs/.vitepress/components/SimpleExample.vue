@@ -33,9 +33,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="example-container">
-    <sliced-areas ref="areasRef" />
-  </div>
+  <ClientOnly>
+    <div class="example-container">
+      <sliced-areas ref="areasRef" />
+    </div>
+  </ClientOnly>
 </template>
 
 <style scoped>
