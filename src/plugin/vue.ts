@@ -97,4 +97,5 @@ export const SlicedAreasPlugin = {
   },
 }
 
+export { SlicedAreas }
 export default SlicedAreas

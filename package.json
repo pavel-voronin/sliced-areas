@@ -61,7 +61,10 @@
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix --cache",
     "lint": "run-s lint:*",
-    "format": "prettier --write --experimental-cli src/"
+    "format": "prettier --write --experimental-cli src/",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "peerDependencies": {
     "vue": "^3.5.25"
@@ -71,10 +74,9 @@
       "optional": true
     }
   },
-  "dependencies": {},
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.18",
     "@prettier/plugin-oxc": "^0.0.5",
+    "@tailwindcss/vite": "^4.1.18",
     "@tsconfig/node24": "^24.0.3",
     "@types/jsdom": "^27.0.0",
     "@types/node": "^24.10.1",
@@ -95,6 +97,7 @@
     "typescript": "~5.9.0",
     "vite": "npm:rolldown-vite@latest",
     "vite-plugin-vue-devtools": "^8.0.5",
+    "vitepress": "^1.6.4",
     "vitest": "^4.0.14",
     "vue": "^3.5.25",
     "vue-tsc": "^3.1.5"
