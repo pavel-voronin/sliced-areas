@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { SlicedAreas } from '../../../src/plugin/vue'
-import type { AreasLayout, AreaResolver } from '../../../src/plugin/vue'
-import '../../../src/plugin/styles.css'
+import { ref, onMounted, defineAsyncComponent } from 'vue'
 
-const layout = ref<AreasLayout>({
+const SlicedAreas = defineAsyncComponent(async () => {
+  const module = await import('../../../src/plugin/vue')
+  await import('../../../src/plugin/styles.css')
+  return module.SlicedAreas
+})
+
+const layout = ref({
   areas: [
     { tag: 'viewport', rect: { left: 0, right: 0.7, top: 1, bottom: 0.3 } },
     { tag: 'outliner', rect: { left: 0.7, right: 1, top: 1, bottom: 0.3 } },
@@ -12,9 +15,9 @@ const layout = ref<AreasLayout>({
   ]
 })
 
-const resolver = ref<AreaResolver | null>(null)
+const resolver = ref<any>(null)
 
-const handleLayoutChange = (detail: { layout: AreasLayout }) => {
+const handleLayoutChange = (detail: any) => {
   layout.value = detail.layout
 }
 

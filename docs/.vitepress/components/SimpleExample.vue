@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import type { SlicedAreasElement } from '../../../src/plugin/sliced-areas'
-import '../../../src/plugin/styles.css'
-import '../../../src/plugin/sliced-areas'
 
-const areasRef = ref<SlicedAreasElement | null>(null)
+const areasRef = ref<any>(null)
 
-onMounted(() => {
+onMounted(async () => {
+  // Import only on client side
+  await import('../../../src/plugin/sliced-areas')
+  await import('../../../src/plugin/styles.css')
+
   if (areasRef.value) {
     // Set resolver FIRST
-    areasRef.value.setResolver((tag) => {
+    areasRef.value.setResolver((tag: string) => {
       const container = document.createElement('div')
       container.style.cssText = 'padding: 2rem; height: 100%; display: flex; align-items: center; justify-content: center;'
 
