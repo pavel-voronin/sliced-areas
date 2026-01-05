@@ -1,27 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { SlicedAreas } from '../../../src/plugin/vue'
-import type { AreasLayout } from '../../../src/plugin/vue'
+import type { AreasLayout, AreaResolver } from '../../../src/plugin/vue'
 import '../../../src/plugin/styles.css'
-
-// Create area content with DOM
-const createAreaContent = (tag: string, title: string, description: string): HTMLElement => {
-  const container = document.createElement('div')
-  container.style.cssText = 'width: 100%; height: 100%; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;'
-
-  const titleEl = document.createElement('div')
-  titleEl.style.cssText = 'font-weight: 600; font-size: 0.875rem; color: #a0a0a0;'
-  titleEl.textContent = title
-
-  const content = document.createElement('div')
-  content.style.cssText = 'flex: 1; overflow: auto; font-size: 0.75rem; color: #666;'
-  content.textContent = description
-
-  container.appendChild(titleEl)
-  container.appendChild(content)
-
-  return container
-}
 
 const layout = ref<AreasLayout>({
   areas: [
@@ -31,20 +12,40 @@ const layout = ref<AreasLayout>({
   ]
 })
 
-const resolveArea = (tag: string) => {
-  if (tag === 'viewport') {
-    return createAreaContent(tag, 'VIEWPORT', 'Main viewport area. This uses the Vue wrapper!')
-  } else if (tag === 'outliner') {
-    return createAreaContent(tag, 'OUTLINER', 'Sidebar for navigation. Resize by dragging the splitter.')
-  } else if (tag === 'console') {
-    return createAreaContent(tag, 'CONSOLE', 'Console output area. Click corners for context menu.')
-  }
-  return null
-}
+const resolver = ref<AreaResolver | null>(null)
 
 const handleLayoutChange = (detail: { layout: AreasLayout }) => {
   layout.value = detail.layout
 }
+
+onMounted(() => {
+  // Create resolver only on client side
+  resolver.value = (tag: string) => {
+    const container = document.createElement('div')
+    container.style.cssText = 'width: 100%; height: 100%; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;'
+
+    const titleEl = document.createElement('div')
+    titleEl.style.cssText = 'font-weight: 600; font-size: 0.875rem; color: #a0a0a0;'
+
+    const content = document.createElement('div')
+    content.style.cssText = 'flex: 1; overflow: auto; font-size: 0.75rem; color: #666;'
+
+    if (tag === 'viewport') {
+      titleEl.textContent = 'VIEWPORT'
+      content.textContent = 'Main viewport area. This uses the Vue wrapper!'
+    } else if (tag === 'outliner') {
+      titleEl.textContent = 'OUTLINER'
+      content.textContent = 'Sidebar for navigation. Resize by dragging the splitter.'
+    } else if (tag === 'console') {
+      titleEl.textContent = 'CONSOLE'
+      content.textContent = 'Console output area. Click corners for context menu.'
+    }
+
+    container.appendChild(titleEl)
+    container.appendChild(content)
+    return container
+  }
+})
 </script>
 
 <template>
@@ -52,7 +53,7 @@ const handleLayoutChange = (detail: { layout: AreasLayout }) => {
     <div class="demo-container">
       <SlicedAreas
         :layout="layout"
-        :resolver="resolveArea"
+        :resolver="resolver"
         @layoutchange="handleLayoutChange"
         class="demo-areas"
       />
