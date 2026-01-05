@@ -2,6 +2,8 @@
 
 Blender-like resizable and splittable areas layout system. Available as a Web Component with optional Vue 3 wrapper.
 
+📚 **[Documentation & Examples](https://pavel-voronin.github.io/sliced-areas/)**
+
 ## Installation
 
 ```sh
