@@ -15,6 +15,9 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       external: ['vue'],
+      treeshake: {
+        moduleSideEffects: (id) => id.includes('src/plugin/sliced-areas.ts'),
+      },
       output: {
         globals: {
           vue: 'Vue',

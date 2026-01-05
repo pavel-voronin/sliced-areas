@@ -659,6 +659,7 @@ export class SlicedAreasElement extends HTMLElement {
         const tag = this.areaTags.get(area.id) ?? area.id
         const resolved = this.areaResolver(tag)
         if (resolved) {
+          this.assertFreshResolvedNode(area.id, tag, resolved)
           resolved.dataset.areaId = area.id
           resolved.setAttribute(AUTO_ATTR, 'true')
           this.resolvedNodes.set(area.id, resolved)
@@ -767,6 +768,29 @@ export class SlicedAreasElement extends HTMLElement {
   }
 
   /**
+   * Validates that a resolver returns a fresh node per area.
+   *
+   * @param areaId Area id being resolved.
+   * @param tag Resolver tag for error context.
+   * @param resolved Resolved node returned by the resolver.
+   */
+  private assertFreshResolvedNode(areaId: AreaId, tag: string, resolved: HTMLElement): void {
+    const existingId = resolved.dataset.areaId
+    if (existingId && existingId !== areaId) {
+      throw new Error(
+        `Resolver must return a fresh element per area. Got an element already assigned to "${existingId}" for tag "${tag}".`,
+      )
+    }
+    for (const [resolvedId, node] of this.resolvedNodes.entries()) {
+      if (node === resolved && resolvedId !== areaId) {
+        throw new Error(
+          `Resolver must return a fresh element per area. Got the same element for "${resolvedId}" and "${areaId}" (tag "${tag}").`,
+        )
+      }
+    }
+  }
+
+  /**
    * Ensures a DOM node exists for a newly created area.
    *
    * @param newAreaId Area id needing a node.
@@ -797,6 +821,7 @@ export class SlicedAreasElement extends HTMLElement {
     if (sourceTag && this.areaResolver) {
       const resolved = this.areaResolver(sourceTag)
       if (resolved) {
+        this.assertFreshResolvedNode(newAreaId, sourceTag, resolved)
         resolved.dataset.areaId = newAreaId
         resolved.setAttribute(AUTO_ATTR, 'true')
         this.appendChild(resolved)
@@ -4123,9 +4148,13 @@ export class SlicedAreasElement extends HTMLElement {
 /**
  * Registers the custom element when not already defined.
  */
-if (!customElements.get('sliced-areas')) {
-  customElements.define('sliced-areas', SlicedAreasElement)
+export const registerSlicedAreasElement = () => {
+  if (!customElements.get('sliced-areas')) {
+    customElements.define('sliced-areas', SlicedAreasElement)
+  }
 }
+
+registerSlicedAreasElement()
 
 /**
  * Global tag name mapping for the custom element.

@@ -123,6 +123,31 @@ describe('sliced-areas branch coverage', () => {
     expect(placeholder.textContent).toBe('Area')
   })
 
+  it('throws when resolver reuses the same element for multiple areas', () => {
+    const el = setupElement()
+    const shared = document.createElement('div')
+    el.setResolver(() => shared)
+    const layout = {
+      areas: [
+        { tag: 'left', rect: { left: 0, right: 0.5, top: 1, bottom: 0 } },
+        { tag: 'right', rect: { left: 0.5, right: 1, top: 1, bottom: 0 } },
+      ],
+    }
+    expect(() => {
+      el.layout = layout
+    }).toThrow(/fresh element/i)
+  })
+
+  it('throws when resolver returns a cached node for another area', () => {
+    const el = setupElement()
+    const node = document.createElement('div')
+    ;(el as unknown as { resolvedNodes: Map<string, HTMLElement> }).resolvedNodes.set('a', node)
+    const assertFresh = (
+      el as unknown as { assertFreshResolvedNode: (areaId: string, tag: string, node: HTMLElement) => void }
+    ).assertFreshResolvedNode.bind(el)
+    expect(() => assertFresh('b', 'tag', node)).toThrow(/same element/i)
+  })
+
   it('covers render and retag branches', () => {
     const el = setupElement()
     setResolver(el)

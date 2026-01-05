@@ -11,7 +11,7 @@
     "tiling",
     "blender"
   ],
-  "version": "1.0.0",
+  "version": "1.0.3",
   "type": "module",
   "license": "MIT",
   "author": "Pavel Voronin",
@@ -43,7 +43,8 @@
     "LICENSE"
   ],
   "sideEffects": [
-    "./dist/styles.css"
+    "./dist/styles.css",
+    "./dist/vue.js"
   ],
   "scripts": {
     "dev": "vite",

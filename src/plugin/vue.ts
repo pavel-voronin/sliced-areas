@@ -10,7 +10,7 @@ import {
   type PropType,
 } from 'vue'
 
-import './sliced-areas'
+import { registerSlicedAreasElement } from './sliced-areas'
 import type { AreaResolver, AreasLayout, CornerClickDetail, SlicedAreasElement } from './sliced-areas'
 
 export type {
@@ -26,6 +26,8 @@ export type {
   GraphVert,
   SlicedAreasElement,
 } from './sliced-areas'
+
+registerSlicedAreasElement()
 
 const SlicedAreas = defineComponent({
   name: 'SlicedAreas',

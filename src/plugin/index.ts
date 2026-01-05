@@ -1,4 +1,4 @@
-export { SlicedAreasElement } from './sliced-areas'
+export { SlicedAreasElement, registerSlicedAreasElement } from './sliced-areas'
 export type {
   AreaId,
   AreaRect,
