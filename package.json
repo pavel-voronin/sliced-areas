@@ -1,0 +1,101 @@
+{
+  "name": "sliced-areas",
+  "description": "Blender-like \"Areas\" layout system as a Web Component with an optional Vue 3 wrapper.",
+  "keywords": [
+    "areas",
+    "layout",
+    "web-components",
+    "vue",
+    "splitter",
+    "dock",
+    "tiling",
+    "blender"
+  ],
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "author": "Pavel Voronin",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pavel-voronin/sliced-areas.git"
+  },
+  "homepage": "https://github.com/pavel-voronin/sliced-areas#readme",
+  "bugs": {
+    "url": "https://github.com/pavel-voronin/sliced-areas/issues"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "./dist/styles.css"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "build:lib": "run-s build:lib:bundle build:lib:types build:lib:styles",
+    "build:lib:bundle": "vite build -c vite.lib.config.ts",
+    "build:lib:types": "tsc -p tsconfig.lib.json",
+    "build:lib:styles": "node scripts/copy-styles.mjs",
+    "prepublishOnly": "run-s type-check test build:lib",
+    "type-check": "vue-tsc --build",
+    "test": "vitest --coverage",
+    "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
+    "lint:eslint": "eslint . --fix --cache",
+    "lint": "run-s lint:*",
+    "format": "prettier --write --experimental-cli src/"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.25"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@prettier/plugin-oxc": "^0.0.5",
+    "@tsconfig/node24": "^24.0.3",
+    "@types/jsdom": "^27.0.0",
+    "@types/node": "^24.10.1",
+    "@vitejs/plugin-vue": "^6.0.2",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-oxlint": "~1.29.0",
+    "eslint-plugin-vue": "~10.5.1",
+    "jiti": "^2.6.1",
+    "jsdom": "^27.2.0",
+    "npm-run-all2": "^8.0.4",
+    "oxlint": "~1.29.0",
+    "prettier": "3.6.2",
+    "tailwindcss": "^4.1.18",
+    "typescript": "~5.9.0",
+    "vite": "npm:rolldown-vite@latest",
+    "vite-plugin-vue-devtools": "^8.0.5",
+    "vitest": "^4.0.14",
+    "vue": "^3.5.25",
+    "vue-tsc": "^3.1.5"
+  }
+}
