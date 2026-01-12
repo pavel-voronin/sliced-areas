@@ -14,6 +14,8 @@ import type {
   AreaId,
   AreaTag,
   AreaRect,
+  SlicedAreasOperation,
+  SlicedAreasOperationsConfig,
   CornerId,
   CornerClickDetail,
   GraphVert,
@@ -241,6 +243,33 @@ const resolver: AreaResolver = (tag: AreaTag): HTMLElement | null => {
 }
 ```
 
+### `SlicedAreasOperation`
+
+Operation identifiers for enabling or disabling behavior.
+
+```ts
+type SlicedAreasOperation =
+  | 'resize'
+  | 'split'
+  | 'join'
+  | 'replace'
+  | 'swap'
+  | 'move'
+  | 'maximize'
+  | 'restore'
+```
+
+### `SlicedAreasOperationsConfig`
+
+Configuration for which operations are enabled.
+
+```ts
+type SlicedAreasOperationsConfig = {
+  enable?: SlicedAreasOperation[]
+  disable?: SlicedAreasOperation[]
+}
+```
+
 ## Event Types
 
 ### `CornerClickDetail`
@@ -276,6 +305,7 @@ The Web Component element class.
 class SlicedAreasElement extends HTMLElement {
   // Properties
   layout: AreasLayout | null
+  operations: SlicedAreasOperationsConfig | null
   readonly graph: AreasGraph | null
 
   // Methods

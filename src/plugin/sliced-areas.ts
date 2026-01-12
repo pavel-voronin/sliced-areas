@@ -115,6 +115,27 @@ type RemainderInfo = { id: AreaId; sourceAreaId: AreaId }
 export type AreaResolver = (tag: AreaTag) => HTMLElement | null | undefined
 
 /**
+ * Supported operation identifiers for interactive actions.
+ */
+export type SlicedAreasOperation =
+  | 'resize'
+  | 'split'
+  | 'join'
+  | 'replace'
+  | 'swap'
+  | 'move'
+  | 'maximize'
+  | 'restore'
+
+/**
+ * Configuration for enabling or disabling operations.
+ */
+export type SlicedAreasOperationsConfig = {
+  enable?: SlicedAreasOperation[]
+  disable?: SlicedAreasOperation[]
+}
+
+/**
  * State for resizing drag handles.
  */
 type DragState = {
@@ -220,6 +241,17 @@ const MOVE_SNAP_PX = 12
  */
 const REPLACE_THRESHOLD_RATIO = MIN_RATIO * 3
 
+const ALL_OPERATIONS: ReadonlyArray<SlicedAreasOperation> = [
+  'resize',
+  'split',
+  'join',
+  'replace',
+  'swap',
+  'move',
+  'maximize',
+  'restore',
+]
+
 /**
  * Web component implementing Blender-like area layout behavior.
  */
@@ -295,6 +327,16 @@ export class SlicedAreasElement extends HTMLElement {
   private storedTags: Map<AreaId, AreaTag> | null = null
 
   /**
+   * Configuration for enabled operations.
+   */
+  private operationsConfig: SlicedAreasOperationsConfig = {}
+
+  /**
+   * Resolved set of enabled operations.
+   */
+  private enabledOperations: Set<SlicedAreasOperation> = new Set(ALL_OPERATIONS)
+
+  /**
    * Resolver used to materialize area content.
    */
   private areaResolver: AreaResolver | null = null
@@ -366,6 +408,18 @@ export class SlicedAreasElement extends HTMLElement {
   }
 
   /**
+   * Gets or sets which operations are enabled.
+   */
+  get operations(): SlicedAreasOperationsConfig {
+    return this.operationsConfig
+  }
+
+  set operations(value: SlicedAreasOperationsConfig | null) {
+    this.operationsConfig = value ?? {}
+    this.syncOperations()
+  }
+
+  /**
    * Sets a resolver for auto-providing area content.
    *
    * @param resolver Callback for resolving an area tag to a node.
@@ -414,6 +468,7 @@ export class SlicedAreasElement extends HTMLElement {
     clientX = 0,
     clientY = 0,
   ): void {
+    if (!this.isOperationEnabled('split')) return
     if (!this.graph) return
     const newAreaId = this.nextAreaId()
     const updated =
@@ -434,6 +489,7 @@ export class SlicedAreasElement extends HTMLElement {
    * @param targetAreaId Area that remains after the join.
    */
   join(sourceAreaId: AreaId, targetAreaId: AreaId): void {
+    if (!this.isOperationEnabled('join')) return
     if (!this.graph) return
     if (!this.canJoin(sourceAreaId, targetAreaId)) return
     const updated = this.joinAreas(this.graph, sourceAreaId, targetAreaId)
@@ -451,6 +507,7 @@ export class SlicedAreasElement extends HTMLElement {
    * @param targetAreaId Area to remove.
    */
   replace(sourceAreaId: AreaId, targetAreaId: AreaId): void {
+    if (!this.isOperationEnabled('replace')) return
     if (!this.graph) return
     const updated = this.replaceArea(this.graph, sourceAreaId, targetAreaId)
     if (!updated) return
@@ -468,6 +525,7 @@ export class SlicedAreasElement extends HTMLElement {
    * @param targetAreaId Second area id.
    */
   swap(sourceAreaId: AreaId, targetAreaId: AreaId): void {
+    if (!this.isOperationEnabled('swap')) return
     if (!this.graph) return
     const updated = this.swapAreaIds(this.graph, sourceAreaId, targetAreaId)
     if (!updated) return
@@ -485,6 +543,7 @@ export class SlicedAreasElement extends HTMLElement {
    * @param remainder Remaining rectangle for the target area.
    */
   move(sourceAreaId: AreaId, targetAreaId: AreaId, overlay: Rect, remainder: Rect): void {
+    if (!this.isOperationEnabled('move')) return
     if (!this.graph) return
     const updated = this.moveArea(this.graph, sourceAreaId, targetAreaId, overlay, remainder)
     if (!updated) return
@@ -540,6 +599,7 @@ export class SlicedAreasElement extends HTMLElement {
    * @param areaId Area to maximize.
    */
   maximize(areaId: AreaId): void {
+    if (!this.isOperationEnabled('maximize')) return
     if (!this.graph) return
     if (this.storedGraph) return
     if (!this.graph.areas[areaId]) return
@@ -559,6 +619,7 @@ export class SlicedAreasElement extends HTMLElement {
    * Restores the layout from a previous maximize action.
    */
   restore(): void {
+    if (!this.isOperationEnabled('restore')) return
     if (!this.storedGraph) return
     this.graph = this.storedGraph
     if (this.storedTags) {
@@ -635,6 +696,54 @@ export class SlicedAreasElement extends HTMLElement {
   private emitCornerClick(detail: CornerClickDetail): void {
     if (detail.corner !== 'top-left') return
     this.dispatchEvent(new CustomEvent('sliced-areas:cornerclick', { detail }))
+  }
+
+  /**
+   * Rebuilds the enabled operation set and re-renders.
+   */
+  private syncOperations(): void {
+    const allowed = new Set(ALL_OPERATIONS)
+    const enabled = new Set<SlicedAreasOperation>()
+    const enableList = (this.operationsConfig.enable ?? []).filter(
+      (op): op is SlicedAreasOperation => allowed.has(op),
+    )
+    if (enableList.length > 0) {
+      for (const op of enableList) {
+        enabled.add(op)
+      }
+    } else {
+      for (const op of ALL_OPERATIONS) {
+        enabled.add(op)
+      }
+    }
+    const disableList = (this.operationsConfig.disable ?? []).filter(
+      (op): op is SlicedAreasOperation => allowed.has(op),
+    )
+    for (const op of disableList) {
+      enabled.delete(op)
+    }
+    this.enabledOperations = enabled
+    this.render()
+  }
+
+  /**
+   * Checks whether an operation is currently enabled.
+   */
+  private isOperationEnabled(operation: SlicedAreasOperation): boolean {
+    return this.enabledOperations.has(operation)
+  }
+
+  /**
+   * Returns whether any area drag operations are enabled.
+   */
+  private hasAreaDragOperations(): boolean {
+    return (
+      this.isOperationEnabled('split') ||
+      this.isOperationEnabled('join') ||
+      this.isOperationEnabled('move') ||
+      this.isOperationEnabled('replace') ||
+      this.isOperationEnabled('swap')
+    )
   }
 
   /**
@@ -733,8 +842,10 @@ export class SlicedAreasElement extends HTMLElement {
       }
     }
 
-    for (const handle of this.buildResizeHandles(this.graph, width, height)) {
-      this.rootEl.appendChild(handle)
+    if (this.isOperationEnabled('resize')) {
+      for (const handle of this.buildResizeHandles(this.graph, width, height)) {
+        this.rootEl.appendChild(handle)
+      }
     }
   }
 
@@ -1942,6 +2053,7 @@ export class SlicedAreasElement extends HTMLElement {
     if (target.classList.contains('sliced-areas-grab')) {
       const areaId = target.dataset.areaId
       if (!areaId) return
+      if (!this.hasAreaDragOperations()) return
       event.preventDefault()
       this.startAreaDrag(event, areaId)
       return
@@ -1950,11 +2062,13 @@ export class SlicedAreasElement extends HTMLElement {
       const areaId = target.dataset.areaId
       if (!areaId) return
       const corner = target.dataset.corner as CornerId | undefined
+      if (!this.hasAreaDragOperations()) return
       event.preventDefault()
       this.startAreaDrag(event, areaId, corner)
       return
     }
     if (!target.classList.contains('sliced-areas-handle')) return
+    if (!this.isOperationEnabled('resize')) return
     event.preventDefault()
 
     const axis = (target.dataset.axis ?? '') as SplitAxis
@@ -2244,6 +2358,11 @@ export class SlicedAreasElement extends HTMLElement {
    */
   private updateAreaDragAt(clientX: number, clientY: number): void {
     if (!this.rootEl || !this.graph || !this.areaDragState) return
+    const allowSplit = this.isOperationEnabled('split')
+    const allowJoin = this.isOperationEnabled('join')
+    const allowMove = this.isOperationEnabled('move')
+    const allowReplace = this.isOperationEnabled('replace')
+    const allowSwap = this.isOperationEnabled('swap')
     this.lastPointer = { x: clientX, y: clientY }
     const startDx = clientX - this.areaDragState.startX
     const startDy = clientY - this.areaDragState.startY
@@ -2269,6 +2388,13 @@ export class SlicedAreasElement extends HTMLElement {
     }
 
     if (hit.areaId === sourceAreaId) {
+      if (!allowSplit) {
+        this.hideDropOverlay()
+        this.hideJoinShade()
+        this.hideDragLabel()
+        this.resetDragCursor()
+        return
+      }
       const canSplitVertical = this.canSplitRect(hit.rect, 'vertical')
       const canSplitHorizontal = this.canSplitRect(hit.rect, 'horizontal')
       if (!canSplitVertical && !canSplitHorizontal) {
@@ -2305,7 +2431,7 @@ export class SlicedAreasElement extends HTMLElement {
       return
     }
 
-    if (this.areaDragState.swapMode) {
+    if (this.areaDragState.swapMode && allowSwap) {
       this.showDropOverlay({ areaId: hit.areaId, rect: hit.rect }, 'center', 'swap', hit.rect)
       this.hideJoinShade()
       this.showDragLabel(clientX, clientY, 'Swap')
@@ -2314,8 +2440,17 @@ export class SlicedAreasElement extends HTMLElement {
       return
     }
 
-    const joinTarget = this.findJoinTargetAtPoint(sourceAreaId, clientX, clientY)
+    const joinTarget = allowJoin
+      ? this.findJoinTargetAtPoint(sourceAreaId, clientX, clientY)
+      : null
     if (!joinTarget) {
+      if (!allowMove && !allowReplace) {
+        this.hideDropOverlay()
+        this.hideJoinShade()
+        this.hideDragLabel()
+        this.resetDragCursor()
+        return
+      }
       const zone = this.getMoveZone(hit.rect, clientX, clientY)
       if (zone === 'center') {
         this.hideDropOverlay()
@@ -2325,12 +2460,19 @@ export class SlicedAreasElement extends HTMLElement {
         return
       }
       const preview = this.getMovePreview(hit.rect, zone, clientX, clientY)
-      if (preview.replace) {
+      if (preview.replace && allowReplace) {
         this.showDropOverlay({ areaId: hit.areaId, rect: hit.rect }, zone, 'replace', hit.rect)
         this.hideJoinShade()
         this.showDragLabel(clientX, clientY, 'Replace')
         this.setDragCursor('alias')
         this.lastDropTarget = { areaId: hit.areaId, rect: hit.rect, zone, mode: 'replace' }
+        return
+      }
+      if (!allowMove) {
+        this.hideDropOverlay()
+        this.hideJoinShade()
+        this.hideDragLabel()
+        this.resetDragCursor()
         return
       }
       this.showDropOverlay({ areaId: hit.areaId, rect: hit.rect }, zone, 'move', preview.overlay)
@@ -2380,6 +2522,9 @@ export class SlicedAreasElement extends HTMLElement {
     if (!hit) return
 
     if (hit.mode === 'split') {
+      if (!this.isOperationEnabled('split')) {
+        return
+      }
       if (hit.zone !== 'center') {
         const axis = hit.zone === 'left' || hit.zone === 'right' ? 'vertical' : 'horizontal'
         if (!this.canSplitRect(hit.rect, axis)) {
@@ -2391,11 +2536,17 @@ export class SlicedAreasElement extends HTMLElement {
     }
 
     if (hit.mode === 'replace') {
+      if (!this.isOperationEnabled('replace')) {
+        return
+      }
       this.replace(sourceAreaId, hit.areaId)
       return
     }
 
     if (hit.mode === 'move') {
+      if (!this.isOperationEnabled('move')) {
+        return
+      }
       if (!hit.moveRect || !hit.remainderRect) return
       if (hit.zone === 'center') return
       this.move(sourceAreaId, hit.areaId, hit.moveRect, hit.remainderRect)
@@ -2403,6 +2554,9 @@ export class SlicedAreasElement extends HTMLElement {
     }
 
     if (hit.mode === 'swap') {
+      if (!this.isOperationEnabled('swap')) {
+        return
+      }
       this.swap(sourceAreaId, hit.areaId)
       return
     }
@@ -2410,6 +2564,9 @@ export class SlicedAreasElement extends HTMLElement {
     if (hit.areaId === sourceAreaId) return
 
     if (hit.zone === 'center') {
+      if (!this.isOperationEnabled('swap')) {
+        return
+      }
       this.swap(sourceAreaId, hit.areaId)
       return
     }
@@ -2420,6 +2577,9 @@ export class SlicedAreasElement extends HTMLElement {
       hit.zone === 'top' ||
       hit.zone === 'bottom'
     ) {
+      if (!this.isOperationEnabled('join')) {
+        return
+      }
       this.join(sourceAreaId, hit.areaId)
     }
   }

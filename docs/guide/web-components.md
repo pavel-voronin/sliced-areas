@@ -61,6 +61,22 @@ el.setResolver((tag) => {
 })
 ```
 
+### Configure Operations
+
+Enable or disable interactive operations. By default, all are enabled.
+
+```js
+// Disable resize and swap
+el.operations = {
+  disable: ['resize', 'swap']
+}
+
+// Allow only split and join
+el.operations = {
+  enable: ['split', 'join']
+}
+```
+
 ## Layout Format
 
 The layout uses normalized coordinates (0 to 1 range):

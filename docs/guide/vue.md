@@ -103,6 +103,51 @@ A function that creates DOM content for each area tag:
 type AreaResolver = (tag: string) => HTMLElement | null | undefined
 ```
 
+### `operations`
+
+- **Type**: `SlicedAreasOperationsConfig | null`
+- **Required**: No
+- **Default**: `null` (all operations enabled)
+
+Enable or disable interactive operations:
+
+```ts
+type SlicedAreasOperationsConfig = {
+  enable?: Array<
+    | 'resize'
+    | 'split'
+    | 'join'
+    | 'replace'
+    | 'swap'
+    | 'move'
+    | 'maximize'
+    | 'restore'
+  >
+  disable?: Array<
+    | 'resize'
+    | 'split'
+    | 'join'
+    | 'replace'
+    | 'swap'
+    | 'move'
+    | 'maximize'
+    | 'restore'
+  >
+}
+```
+
+```vue
+<script setup>
+const operations = {
+  disable: ['resize', 'swap']
+}
+</script>
+
+<template>
+  <SlicedAreas :operations="operations" />
+</template>
+```
+
 ## Events
 
 ### `@layoutchange`

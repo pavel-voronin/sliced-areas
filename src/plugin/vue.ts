@@ -11,7 +11,13 @@ import {
 } from 'vue'
 
 import { registerSlicedAreasElement } from './sliced-areas'
-import type { AreaResolver, AreasLayout, CornerClickDetail, SlicedAreasElement } from './sliced-areas'
+import type {
+  AreaResolver,
+  AreasLayout,
+  CornerClickDetail,
+  SlicedAreasElement,
+  SlicedAreasOperationsConfig,
+} from './sliced-areas'
 
 export type {
   AreaId,
@@ -25,6 +31,8 @@ export type {
   GraphEdge,
   GraphVert,
   SlicedAreasElement,
+  SlicedAreasOperation,
+  SlicedAreasOperationsConfig,
 } from './sliced-areas'
 
 registerSlicedAreasElement()
@@ -39,6 +47,10 @@ const SlicedAreas = defineComponent({
     },
     resolver: {
       type: Function as unknown as PropType<AreaResolver | null>,
+      default: null,
+    },
+    operations: {
+      type: Object as PropType<SlicedAreasOperationsConfig | null>,
       default: null,
     },
   },
@@ -70,11 +82,12 @@ const SlicedAreas = defineComponent({
     })
 
     watch(
-      [() => elementRef.value, () => props.resolver, () => props.layout],
-      ([element, resolver, layout]) => {
+      [() => elementRef.value, () => props.resolver, () => props.layout, () => props.operations],
+      ([element, resolver, layout, operations]) => {
         if (!element) return
         element.setResolver(resolver)
         element.layout = layout
+        element.operations = operations
       },
       { immediate: true },
     )

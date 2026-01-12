@@ -14,6 +14,7 @@ import type {
   AreasLayout,
   CornerClickDetail,
   SlicedAreasElement,
+  SlicedAreasOperationsConfig,
 } from '../../src/plugin/vue'
 
 describe('SlicedAreas Vue wrapper', () => {
@@ -31,9 +32,15 @@ describe('SlicedAreas Vue wrapper', () => {
     }
 
     const resolver: AreaResolver = () => document.createElement('div')
-    const state = reactive<{ layout: AreasLayout | null; resolver: AreaResolver | null }>({
+    const operations: SlicedAreasOperationsConfig = { disable: ['swap'] }
+    const state = reactive<{
+      layout: AreasLayout | null
+      resolver: AreaResolver | null
+      operations: SlicedAreasOperationsConfig | null
+    }>({
       layout,
       resolver,
+      operations,
     })
 
     const Root = defineComponent({
@@ -41,6 +48,7 @@ describe('SlicedAreas Vue wrapper', () => {
         h(SlicedAreas, {
           layout: state.layout,
           resolver: state.resolver,
+          operations: state.operations,
         }),
     })
 
@@ -52,6 +60,7 @@ describe('SlicedAreas Vue wrapper', () => {
     const element = container.querySelector('sliced-areas') as SlicedAreasElement | null
     expect(element).not.toBeNull()
     expect(element?.layout?.areas[0]?.tag).toBe('main')
+    expect(element?.operations).toEqual(operations)
 
     const updatedResolver = vi.fn<AreaResolver>(() => document.createElement('div'))
     const setResolverSpy = vi.spyOn(element as SlicedAreasElement, 'setResolver')

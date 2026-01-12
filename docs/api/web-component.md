@@ -41,6 +41,37 @@ element.layout = {
 element.layout = null
 ```
 
+### `operations`
+
+Enable or disable interactive operations.
+
+- **Type**: `SlicedAreasOperationsConfig | null`
+- **Default**: `null` (all operations enabled)
+- **Reactive**: Yes (triggers re-render)
+
+Available operations:
+
+- `resize`
+- `split`
+- `join`
+- `replace`
+- `swap`
+- `move`
+- `maximize`
+- `restore`
+
+```js
+// Disable resize and swap
+element.operations = {
+  disable: ['resize', 'swap']
+}
+
+// Allow only split and join
+element.operations = {
+  enable: ['split', 'join']
+}
+```
+
 ### `graph` <Badge type="tip" text="Read-only" />
 
 Access the internal planar graph representation.

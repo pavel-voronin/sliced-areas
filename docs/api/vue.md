@@ -112,6 +112,54 @@ const resolveArea = (tag) => {
 type AreaResolver = (tag: string) => HTMLElement | null | undefined
 ```
 
+### `operations`
+
+Enable or disable interactive operations.
+
+- **Type**: `SlicedAreasOperationsConfig | null`
+- **Required**: No
+- **Default**: `null` (all operations enabled)
+- **Reactive**: Yes
+
+```vue
+<script setup>
+const operations = {
+  disable: ['resize', 'swap']
+}
+</script>
+
+<template>
+  <SlicedAreas :operations="operations" />
+</template>
+```
+
+**Type Definition:**
+
+```ts
+type SlicedAreasOperationsConfig = {
+  enable?: Array<
+    | 'resize'
+    | 'split'
+    | 'join'
+    | 'replace'
+    | 'swap'
+    | 'move'
+    | 'maximize'
+    | 'restore'
+  >
+  disable?: Array<
+    | 'resize'
+    | 'split'
+    | 'join'
+    | 'replace'
+    | 'swap'
+    | 'move'
+    | 'maximize'
+    | 'restore'
+  >
+}
+```
+
 ## Events
 
 ### `@layoutchange`

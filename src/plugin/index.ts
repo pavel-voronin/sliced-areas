@@ -9,4 +9,6 @@ export type {
   GraphEdge,
   GraphVert,
   AreaResolver,
+  SlicedAreasOperation,
+  SlicedAreasOperationsConfig,
 } from './sliced-areas'
