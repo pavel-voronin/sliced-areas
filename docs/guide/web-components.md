@@ -155,7 +155,7 @@ Split an area into two parts:
 ```js
 // Get the area ID from the layout change event
 el.addEventListener('sliced-areas:layoutchange', (e) => {
-  const areaId = e.detail.layout.areas[0].tag
+  const areaId = e.detail.layout.areas[0].id ?? e.detail.layout.areas[0].tag
 
   // Split vertically (default)
   el.split(areaId)
@@ -259,6 +259,24 @@ el.addEventListener('sliced-areas:cornerclick', (event) => {
 })
 ```
 
+### Area Lifecycle Events
+
+Track incremental changes without reloading the full layout:
+
+```js
+el.addEventListener('sliced-areas:area-added', (event) => {
+  console.log('Added:', event.detail)
+})
+
+el.addEventListener('sliced-areas:area-removed', (event) => {
+  console.log('Removed:', event.detail)
+})
+
+el.addEventListener('sliced-areas:area-updated', (event) => {
+  console.log('Updated:', event.detail)
+})
+```
+
 ## TypeScript
 
 Use type imports for better type safety:
@@ -275,7 +293,7 @@ const el = document.querySelector('sliced-areas') as SlicedAreasElement
 
 const layout: AreasLayout = {
   areas: [
-    { tag: 'editor', rect: { left: 0, right: 1, top: 1, bottom: 0 } }
+    { id: 'editor', tag: 'editor', rect: { left: 0, right: 1, top: 1, bottom: 0 } }
   ]
 }
 

@@ -339,6 +339,53 @@ element.addEventListener('sliced-areas:layoutchange', (event) => {
 - User dragging splitters
 - User drag-and-drop operations
 
+**Note:** Not emitted on the initial render or ResizeObserver-driven redraws.
+
+### `sliced-areas:area-added`
+
+Fired when a new area appears in the layout.
+
+**Event Type:** `CustomEvent<AreaAddedDetail>`
+
+**Example:**
+
+```js
+element.addEventListener('sliced-areas:area-added', (event) => {
+  const { areaId, tag, rect } = event.detail
+  console.log('Area added:', areaId, tag, rect)
+})
+```
+
+### `sliced-areas:area-removed`
+
+Fired when an area is removed from the layout.
+
+**Event Type:** `CustomEvent<AreaRemovedDetail>`
+
+**Example:**
+
+```js
+element.addEventListener('sliced-areas:area-removed', (event) => {
+  const { areaId, tag } = event.detail
+  console.log('Area removed:', areaId, tag)
+})
+```
+
+### `sliced-areas:area-updated`
+
+Fired when an area changes geometry or tag.
+
+**Event Type:** `CustomEvent<AreaUpdatedDetail>`
+
+**Example:**
+
+```js
+element.addEventListener('sliced-areas:area-updated', (event) => {
+  const { areaId, tag, oldRect, newRect } = event.detail
+  console.log('Area updated:', areaId, tag, oldRect, newRect)
+})
+```
+
 ### `sliced-areas:cornerclick`
 
 Fired when an area corner is clicked.

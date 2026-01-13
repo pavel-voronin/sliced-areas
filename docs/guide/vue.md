@@ -218,6 +218,35 @@ type CornerClickDetail = {
 }
 ```
 
+### `@area-added`, `@area-removed`, `@area-updated`
+
+Use these to react to incremental updates without diffing the layout yourself:
+
+```vue
+<script setup>
+const handleAreaAdded = (detail) => {
+  console.log('Added:', detail.areaId, detail.tag)
+}
+
+const handleAreaRemoved = (detail) => {
+  console.log('Removed:', detail.areaId, detail.tag)
+}
+
+const handleAreaUpdated = (detail) => {
+  console.log('Updated:', detail.areaId, detail.tag)
+}
+</script>
+
+<template>
+  <SlicedAreas
+    :layout="layout"
+    @area-added="handleAreaAdded"
+    @area-removed="handleAreaRemoved"
+    @area-updated="handleAreaUpdated"
+  />
+</template>
+```
+
 ## Reactive Layout Management
 
 ### Using Ref

@@ -10,6 +10,9 @@ import {
 
 import SlicedAreas, { SlicedAreasPlugin } from '../../src/plugin/vue'
 import type {
+  AreaAddedDetail,
+  AreaRemovedDetail,
+  AreaUpdatedDetail,
   AreaResolver,
   AreasLayout,
   CornerClickDetail,
@@ -149,6 +152,58 @@ describe('SlicedAreas Vue wrapper', () => {
     container.remove()
   })
 
+  it('emits granular area events when dispatched by the element', async () => {
+    const container = document.createElement('div')
+    document.body.append(container)
+
+    const added: AreaAddedDetail[] = []
+    const removed: AreaRemovedDetail[] = []
+    const updated: AreaUpdatedDetail[] = []
+
+    const Root = defineComponent({
+      setup: () => () =>
+        h(SlicedAreas, {
+          onAreaAdded: (detail: AreaAddedDetail) => added.push(detail),
+          onAreaRemoved: (detail: AreaRemovedDetail) => removed.push(detail),
+          onAreaUpdated: (detail: AreaUpdatedDetail) => updated.push(detail),
+        }),
+    })
+
+    const app = createApp(Root)
+    app.mount(container)
+
+    const element = container.querySelector('sliced-areas') as SlicedAreasElement | null
+    expect(element).not.toBeNull()
+
+    const addedDetail: AreaAddedDetail = {
+      areaId: 'area-1',
+      tag: 'main',
+      rect: { left: 0, right: 1, top: 1, bottom: 0 },
+    }
+    const removedDetail: AreaRemovedDetail = {
+      areaId: 'area-1',
+      tag: 'main',
+    }
+    const updatedDetail: AreaUpdatedDetail = {
+      areaId: 'area-1',
+      tag: 'main',
+      oldRect: { left: 0, right: 1, top: 1, bottom: 0 },
+      newRect: { left: 0, right: 1, top: 0.9, bottom: 0 },
+    }
+
+    element?.dispatchEvent(new CustomEvent('sliced-areas:area-added', { detail: addedDetail }))
+    element?.dispatchEvent(new CustomEvent('sliced-areas:area-removed', { detail: removedDetail }))
+    element?.dispatchEvent(new CustomEvent('sliced-areas:area-updated', { detail: updatedDetail }))
+    await nextTick()
+
+    expect(added).toEqual([addedDetail])
+    expect(removed).toEqual([removedDetail])
+    expect(updated).toEqual([updatedDetail])
+
+    app.unmount()
+    container.remove()
+  })
+
   it('registers the component through the plugin', () => {
     const container = document.createElement('div')
     document.body.append(container)
@@ -187,11 +242,17 @@ describe('SlicedAreas Vue wrapper', () => {
 
     expect(addSpy).toHaveBeenCalledWith('sliced-areas:layoutchange', expect.any(Function))
     expect(addSpy).toHaveBeenCalledWith('sliced-areas:cornerclick', expect.any(Function))
+    expect(addSpy).toHaveBeenCalledWith('sliced-areas:area-added', expect.any(Function))
+    expect(addSpy).toHaveBeenCalledWith('sliced-areas:area-removed', expect.any(Function))
+    expect(addSpy).toHaveBeenCalledWith('sliced-areas:area-updated', expect.any(Function))
 
     app.unmount()
 
     expect(removeSpy).toHaveBeenCalledWith('sliced-areas:layoutchange', expect.any(Function))
     expect(removeSpy).toHaveBeenCalledWith('sliced-areas:cornerclick', expect.any(Function))
+    expect(removeSpy).toHaveBeenCalledWith('sliced-areas:area-added', expect.any(Function))
+    expect(removeSpy).toHaveBeenCalledWith('sliced-areas:area-removed', expect.any(Function))
+    expect(removeSpy).toHaveBeenCalledWith('sliced-areas:area-updated', expect.any(Function))
 
     addSpy.mockRestore()
     removeSpy.mockRestore()
