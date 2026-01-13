@@ -1,5 +1,7 @@
 # Changelog
 
+This section summarizes the changes shipped in each release. It mirrors `CHANGELOG.md` and expands the notes with a short description of what each update means for users.
+
 ## 2.0.0
 
 - Added stable area IDs to the serialized layout, preserving DOM nodes across updates and preventing context loss (WebGL/Teleport).

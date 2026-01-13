@@ -369,9 +369,3 @@ import type { AreasLayout, AreaResolver } from 'sliced-areas'
 const layout: AreasLayout = { ... }
 const resolver: AreaResolver = (tag) => { ... }
 ```
-
-## Next Steps
-
-- [Web Components Guide](/guide/web-components) - Learn Web Component usage
-- [Vue Guide](/guide/vue) - Learn Vue integration
-- [API Reference](/api/) - Explore the full API
