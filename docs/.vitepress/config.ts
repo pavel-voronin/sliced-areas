@@ -28,8 +28,8 @@ export default defineConfig({
 
     nav: [
       { text: 'Guide', link: '/guide/installation' },
+      { text: 'Changelog', link: '/guide/changelog' },
       { text: 'API Reference', link: '/api/' },
-      { text: 'GitHub', link: 'https://github.com/pavel-voronin/sliced-areas' },
     ],
 
     sidebar: {
@@ -47,6 +47,10 @@ export default defineConfig({
             { text: 'Web Components', link: '/guide/web-components' },
             { text: 'Vue 3', link: '/guide/vue' },
           ],
+        },
+        {
+          text: 'Release Notes',
+          items: [{ text: 'Changelog', link: '/guide/changelog' }],
         },
       ],
       '/api/': [
@@ -79,5 +83,5 @@ export default defineConfig({
     },
   },
 
-  head: [['link', { rel: 'icon', href: '/sliced-areas/favicon.ico' }]],
+  head: [['link', { rel: 'icon', href: '/sliced-areas/IconoirBreadSlice.svg', type: 'image/svg+xml' }]],
 })

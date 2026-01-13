@@ -754,4 +754,43 @@ describe('sliced-areas branch coverage', () => {
     findHoleCells(edgeGraph)
     axisSpy.mockRestore()
   })
+
+  it('normalizes graph on resize pointer up', () => {
+    const el = setupElement()
+    setResolver(el)
+    el.layout = layoutTwoVertical()
+
+    const graph = (el as unknown as { graph: any }).graph
+    ;(el as unknown as { dragState: any }).dragState = {
+      axis: 'vertical',
+      coord: 0.5,
+      start: 0,
+      end: 1,
+      min: 0,
+      max: 1,
+      pointerId: 1,
+      originX: 0,
+      originY: 0,
+    }
+
+    const onPointerUp = (el as unknown as { onPointerUp: (e: any) => void }).onPointerUp.bind(el)
+    const normalizeSpy = vi.spyOn(el as unknown as { normalizeGraph: (g: any) => any }, 'normalizeGraph')
+    normalizeSpy.mockReturnValueOnce(graph)
+    onPointerUp({ clientX: 0, clientY: 0 })
+
+    ;(el as unknown as { dragState: any }).dragState = {
+      axis: 'vertical',
+      coord: 0.5,
+      start: 0,
+      end: 1,
+      min: 0,
+      max: 1,
+      pointerId: 1,
+      originX: 0,
+      originY: 0,
+    }
+    normalizeSpy.mockRestore()
+    onPointerUp({ clientX: 0, clientY: 0 })
+    expect((el as unknown as { dragState: any }).dragState).toBeNull()
+  })
 })

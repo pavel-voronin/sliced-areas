@@ -15,6 +15,7 @@ export default mergeConfig(
         reporter: ['text', 'html', 'lcov'],
         reportsDirectory: './coverage',
         include: ['src/plugin/**'],
+        exclude: ['src/plugin/styles.css'],
         thresholds: {
           lines: 100,
           statements: 100,

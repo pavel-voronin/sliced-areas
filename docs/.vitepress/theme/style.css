@@ -1,23 +1,35 @@
-/**
- * Customize default theme styling by overriding CSS variables:
- * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
- */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 /**
  * Colors
  * -------------------------------------------------------------------------- */
 
 :root {
-  --vp-c-brand-1: #4f46e5;
-  --vp-c-brand-2: #6366f1;
-  --vp-c-brand-3: #818cf8;
-  --vp-c-brand-soft: rgba(79, 70, 229, 0.14);
+  --vp-c-brand-1: #0f766e;
+  --vp-c-brand-2: #0d9488;
+  --vp-c-brand-3: #14b8a6;
+  --vp-c-brand-soft: rgba(20, 184, 166, 0.18);
+  --vp-font-family-base: 'Space Grotesk', 'Avenir Next', 'Helvetica Neue', Arial, sans-serif;
+  --vp-font-family-mono: 'IBM Plex Mono', 'SFMono-Regular', 'Menlo', monospace;
+  --vp-c-bg: #f7f2ea;
+  --vp-c-bg-soft: #f0e9dd;
+  --vp-c-bg-alt: #fdf8f1;
+  --vp-c-text-1: #1f2428;
+  --vp-c-text-2: #3f4a4f;
+  --vp-c-text-3: #5a666c;
+}
+
+.home-hero-copy-inner h2 {
+  padding-top: 0;
 }
 
 .dark {
-  --vp-c-bg: #0f0f0f;
-  --vp-c-bg-soft: #1a1a1a;
-  --vp-c-bg-alt: #1f1f1f;
+  --vp-c-bg: #0d1117;
+  --vp-c-bg-soft: #141a22;
+  --vp-c-bg-alt: #101620;
+  --vp-c-text-1: #e6edf3;
+  --vp-c-text-2: #b6c2cc;
+  --vp-c-text-3: #8b98a5;
 }
 
 /**
@@ -28,6 +40,116 @@
   --vp-custom-block-tip-border: var(--vp-c-brand-1);
   --vp-custom-block-tip-text: var(--vp-c-brand-1);
   --vp-custom-block-tip-bg: var(--vp-c-brand-soft);
+}
+
+/**
+ * Home
+ * -------------------------------------------------------------------------- */
+
+.VPHome {
+  position: relative;
+}
+
+.VPHome::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 55%),
+    radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.12), transparent 60%),
+    radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.18), transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.VPHome .VPHomeHero,
+.VPHome .VPHomeFeatures {
+  position: relative;
+  z-index: 1;
+}
+
+.VPHome .VPHomeHero {
+  padding-top: calc(var(--vp-nav-height, 64px) + 1.75rem);
+  padding-bottom: 2.25rem;
+}
+
+.VPHome .VPHomeHero .container {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.VPHome .VPHomeHero .name {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: clamp(2.6rem, 4.5vw, 3.6rem);
+  letter-spacing: -0.02em;
+}
+
+.VPHome .VPHomeHero .name::before {
+  content: '';
+  width: clamp(56px, 6vw, 80px);
+  height: clamp(56px, 6vw, 80px);
+  background-color: #0f172a;
+  -webkit-mask: url('/sliced-areas/IconoirBreadSlice.svg') center / contain no-repeat;
+  mask: url('/sliced-areas/IconoirBreadSlice.svg') center / contain no-repeat;
+}
+
+.dark .VPHome .VPHomeHero .name::before {
+  background-color: #f8fafc;
+}
+
+.VPHome .VPHomeHero .tagline {
+  font-size: 0.95rem;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.VPHome .VPHomeHero .text {
+  font-size: clamp(1.6rem, 2.4vw, 2.1rem);
+  line-height: 1.2;
+  white-space: normal;
+  max-width: none;
+}
+
+.home-hero-copy {
+  margin: 0.75rem auto 2rem;
+  width: 100%;
+  max-width: var(--vp-layout-max-width);
+  padding: 0 var(--vp-layout-gutter, 24px);
+}
+
+.home-hero-copy-inner {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 640px;
+  border-left: 6px solid rgba(15, 118, 110, 0.45);
+  padding-left: 1.25rem;
+}
+
+.home-hero-copy-inner h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+}
+
+.home-hero-copy-inner p {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.home-showcase {
+  margin: 1.5rem auto 0;
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 1.5rem 2rem;
+}
+
+.home-showcase p {
+  color: var(--vp-c-text-2);
+  margin-bottom: 0.75rem;
 }
 
 /**
@@ -99,6 +221,226 @@
 }
 
 /**
+ * Component: Sliced Areas Demos
+ * -------------------------------------------------------------------------- */
+
+.sa-home-demo {
+  width: 100%;
+  height: 520px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.85), rgba(240, 233, 221, 0.8));
+}
+
+.sa-home-demo .sa-demo-root {
+  height: 100%;
+}
+
+.dark .sa-home-demo {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.6));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.sa-doc-demo {
+  margin: 1.5rem 0;
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.dark .sa-doc-demo {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.sa-demo-root {
+  width: 100%;
+  height: 420px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--vp-c-bg-alt);
+  animation: sa-fade-up 0.6s ease;
+}
+
+.sa-demo-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sa-demo-button {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sa-demo-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+.sa-demo-button.is-active {
+  background: rgba(20, 184, 166, 0.2);
+  border-color: rgba(20, 184, 166, 0.4);
+}
+
+.dark .sa-demo-button {
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: var(--vp-c-text-1);
+}
+
+.dark .sa-demo-button:hover {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.dark .sa-demo-button.is-active {
+  background: rgba(20, 184, 166, 0.25);
+  border-color: rgba(20, 184, 166, 0.5);
+}
+
+.sa-demo-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.sa-demo-toggle input {
+  accent-color: var(--vp-c-brand-1);
+}
+
+.dark .sa-demo-toggle {
+  border-color: rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--vp-c-text-1);
+}
+
+.sa-demo-pill {
+  margin-left: auto;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(20, 184, 166, 0.18);
+  color: var(--vp-c-text-1);
+}
+
+.dark .sa-demo-pill {
+  background: rgba(20, 184, 166, 0.22);
+  color: var(--vp-c-text-1);
+}
+
+.sa-demo-log {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.05);
+  font-size: 0.75rem;
+}
+
+.dark .sa-demo-log {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.sa-demo-log-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.sa-demo-log-empty {
+  color: var(--vp-c-text-3);
+}
+
+.sa-demo-log-entry {
+  margin-bottom: 0.25rem;
+  color: var(--vp-c-text-2);
+}
+
+.sa-panel {
+  width: 100%;
+  height: 100%;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border-radius: 6px;
+  border: none;
+  background: var(--sa-panel-bg, transparent);
+  box-shadow: none;
+  color: #f8fafc;
+}
+
+.sa-panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sa-panel-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--sa-panel-accent, var(--vp-c-text-1));
+}
+
+.sa-home-demo .sa-panel {
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem;
+}
+
+.sa-home-demo .sa-panel-title {
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.sa-panel-subtitle {
+  font-size: 0.75rem;
+  color: rgba(248, 250, 252, 0.7);
+}
+
+.sa-panel-detail {
+  font-size: 0.78rem;
+  color: rgba(248, 250, 252, 0.75);
+  line-height: 1.4;
+}
+
+.sa-doc-demo .sa-panel {
+  color: #f8fafc;
+}
+
+.sa-doc-demo .sa-panel-detail {
+  color: rgba(248, 250, 252, 0.75);
+}
+
+@keyframes sa-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
  * Component: API Table
  * -------------------------------------------------------------------------- */
 
@@ -142,4 +484,49 @@
   font-family: var(--vp-font-family-mono);
   color: var(--vp-c-text-2);
   font-size: 0.8125rem;
+}
+.VPHome .VPHomeHero .actions a[href*="github.com/pavel-voronin/sliced-areas"] {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-indent: -9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.VPHome .VPHomeHero .actions a[href*="github.com/pavel-voronin/sliced-areas"]::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'><path fill='currentColor' d='M12 2c-5.52 0-10 4.58-10 10.23 0 4.52 2.87 8.36 6.84 9.72.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.64.07-.63.07-.63 1 .07 1.52 1.04 1.52 1.04.89 1.57 2.33 1.12 2.9.86.09-.66.35-1.12.64-1.38-2.22-.26-4.56-1.15-4.56-5.1 0-1.13.39-2.06 1.03-2.79-.1-.26-.45-1.3.1-2.7 0 0 .85-.28 2.78 1.06a9.36 9.36 0 0 1 5.06 0c1.93-1.34 2.78-1.06 2.78-1.06.55 1.4.2 2.44.1 2.7.64.73 1.03 1.66 1.03 2.79 0 3.96-2.34 4.84-4.57 5.1.36.32.69.96.69 1.94 0 1.4-.01 2.53-.01 2.87 0 .27.18.6.69.49A10.25 10.25 0 0 0 22 12.23C22 6.58 17.52 2 12 2z'/></svg>") center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'><path fill='currentColor' d='M12 2c-5.52 0-10 4.58-10 10.23 0 4.52 2.87 8.36 6.84 9.72.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.64.07-.63.07-.63 1 .07 1.52 1.04 1.52 1.04.89 1.57 2.33 1.12 2.9.86.09-.66.35-1.12.64-1.38-2.22-.26-4.56-1.15-4.56-5.1 0-1.13.39-2.06 1.03-2.79-.1-.26-.45-1.3.1-2.7 0 0 .85-.28 2.78 1.06a9.36 9.36 0 0 1 5.06 0c1.93-1.34 2.78-1.06 2.78-1.06.55 1.4.2 2.44.1 2.7.64.73 1.03 1.66 1.03 2.79 0 3.96-2.34 4.84-4.57 5.1.36.32.69.96.69 1.94 0 1.4-.01 2.53-.01 2.87 0 .27.18.6.69.49A10.25 10.25 0 0 0 22 12.23C22 6.58 17.52 2 12 2z'/></svg>") center / contain no-repeat;
+}
+
+.dark .VPHome .VPHomeHero .actions a[href*="github.com/pavel-voronin/sliced-areas"]::before {
+  background-color: #f8fafc;
+}
+
+.VPNavBarTitle .title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.VPNavBarTitle .title::before {
+  content: '';
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask: url('/sliced-areas/IconoirBreadSlice.svg') center / contain no-repeat;
+  mask: url('/sliced-areas/IconoirBreadSlice.svg') center / contain no-repeat;
+  margin-right: -12px;
+}
+
+.VPNavBar .VPNavBarSearch {
+  margin-left: auto;
 }

@@ -14,6 +14,9 @@ import type {
   AreaId,
   AreaTag,
   AreaRect,
+  AreaAddedDetail,
+  AreaRemovedDetail,
+  AreaUpdatedDetail,
   SlicedAreasOperation,
   SlicedAreasOperationsConfig,
   CornerId,
@@ -40,11 +43,14 @@ Serializable layout object.
 ```ts
 type AreasLayout = {
   areas: Array<{
+    id?: AreaId
     tag: AreaTag
     rect: AreaRect
   }>
 }
 ```
+
+`id` is optional. When omitted, the component auto-assigns a stable identifier.
 
 **Usage:**
 
@@ -52,10 +58,12 @@ type AreasLayout = {
 const layout: AreasLayout = {
   areas: [
     {
+      id: 'editor',
       tag: 'editor',
       rect: { left: 0, right: 0.5, top: 1, bottom: 0 }
     },
     {
+      id: 'preview',
       tag: 'preview',
       rect: { left: 0.5, right: 1, top: 1, bottom: 0 }
     }
@@ -293,6 +301,42 @@ element.addEventListener('sliced-areas:cornerclick', (e: CustomEvent<CornerClick
 
   console.log(`Area ${areaId}, corner ${corner} clicked at (${clientX}, ${clientY})`)
 })
+```
+
+### `AreaAddedDetail`
+
+Event detail for new areas.
+
+```ts
+type AreaAddedDetail = {
+  areaId: AreaId
+  tag: AreaTag
+  rect: AreaRect
+}
+```
+
+### `AreaRemovedDetail`
+
+Event detail for removed areas.
+
+```ts
+type AreaRemovedDetail = {
+  areaId: AreaId
+  tag: AreaTag
+}
+```
+
+### `AreaUpdatedDetail`
+
+Event detail for updated areas.
+
+```ts
+type AreaUpdatedDetail = {
+  areaId: AreaId
+  tag: AreaTag
+  oldRect: AreaRect
+  newRect: AreaRect
+}
 ```
 
 ## Element Types

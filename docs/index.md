@@ -3,49 +3,43 @@ layout: home
 
 hero:
   name: Sliced Areas
-  text: Blender-like Layout System
-  tagline: Resizable and splittable areas layout system for modern web applications
+  text: Blender-like Layout System for professional,<br />multi-panel interfaces
+  tagline:
   actions:
     - theme: brand
+      text: Quick Start
+      link: /#quick-start
+    - theme: alt
       text: Get Started
       link: /guide/installation
     - theme: alt
+      text: API Reference
+      link: /api/
+    - theme: alt
       text: View on GitHub
       link: https://github.com/pavel-voronin/sliced-areas
-
-features:
-  - icon: 🧩
-    title: Web Component
-    details: Framework-agnostic Web Component that works everywhere - vanilla JS, React, Vue, Angular, or any other framework.
-
-  - icon: 🎨
-    title: Vue 3 Integration
-    details: First-class Vue 3 support with reactive props, typed events, and seamless component integration.
-
-  - icon: ✂️
-    title: Flexible Layout
-    details: Resize, split, join, swap, and maximize areas. Intuitive corner drag gestures inspired by Blender's interface.
-
-  - icon: 📘
-    title: Type Safe
-    details: Written in TypeScript with full type definitions. Get IntelliSense and type checking out of the box.
-
-  - icon: 🪶
-    title: Zero Dependencies
-    details: No external dependencies. Lightweight and performant. Vue is optional for the Vue wrapper.
-
-  - icon: ✅
-    title: Well Tested
-    details: 100% code coverage with comprehensive test suite. Reliable and production-ready.
 ---
 
-## Interactive Demo
+<section class="home-hero-copy">
+  <div class="home-hero-copy-inner">
+    <h2>Build Blender-grade workspaces on the web</h2>
+    <p>
+      Sliced Areas manages full-bleed, multi-panel layouts inspired by Blender, Resolve,
+      and other professional tools. It handles the layout logic so you can focus on content.
+    </p>
+    <p>
+      You supply a resolver that renders each area. The library takes care of docking,
+      splitting, joining, swapping, replacing, resizing, and maximize/restore.
+    </p>
+  </div>
+</section>
 
-Try it yourself - drag the splitter to resize, drag corners to split/join areas:
+<section class="home-showcase">
+  <p>Try the live layout below. Drag splitters, then drag any corner to dock areas.</p>
+  <HomeShowcase />
+</section>
 
-<SimpleExample />
-
-## Quick Start
+## Quick Start {#quick-start}
 
 ### Web Component
 
@@ -61,10 +55,11 @@ const el = document.querySelector('sliced-areas')
 el.layout = {
   areas: [
     { tag: 'editor', rect: { left: 0, right: 0.5, top: 1, bottom: 0 } },
-    { tag: 'preview', rect: { left: 0.5, right: 1, top: 1, bottom: 0 } }
-  ]
+    { tag: 'preview', rect: { left: 0.5, right: 1, top: 1, bottom: 0 } },
+  ],
 }
-el.setResolver(tag => {
+
+el.setResolver((tag) => {
   const div = document.createElement('div')
   div.textContent = tag
   return div
@@ -86,8 +81,8 @@ import 'sliced-areas/styles.css'
 const layout = ref({
   areas: [
     { tag: 'editor', rect: { left: 0, right: 0.5, top: 1, bottom: 0 } },
-    { tag: 'preview', rect: { left: 0.5, right: 1, top: 1, bottom: 0 } }
-  ]
+    { tag: 'preview', rect: { left: 0.5, right: 1, top: 1, bottom: 0 } },
+  ],
 })
 
 const resolveArea = (tag) => {
@@ -102,28 +97,14 @@ const resolveArea = (tag) => {
 </template>
 ```
 
-## Features
+## Release Notes
 
-### Resize Areas
-
-Drag the splitters between areas to resize them. The layout automatically adjusts to maintain the structure.
-
-### Split & Join
-
-Drag area corners to create drop zones:
-- **Join**: Merge two adjacent areas
-- **Split**: Divide an area horizontally or vertically
-- **Replace**: Swap content between areas
-- **Swap**: Exchange positions of two areas
-
-### Maximize & Restore
-
-Click the maximize button to full-screen an area, hiding others. Click restore to return to the previous layout.
-
-### Persistent Layouts
-
-Layouts are serializable JSON objects. Save them to localStorage, a database, or sync across devices.
+Catch up on updates in the [Changelog](/guide/changelog).
 
 ## License
 
 MIT © Pavel Voronin
+
+## Credits
+
+Favicon icon by [Iconoir](https://github.com/iconoir-icons/iconoir), MIT License.

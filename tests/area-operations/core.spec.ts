@@ -305,6 +305,8 @@ describe('sliced-areas core', () => {
     const collectSpy = vi
       .spyOn(el as unknown as { collectAreaNodes: () => Map<string, HTMLElement> }, 'collectAreaNodes')
       .mockReturnValue(stubMap)
+    const root = el.querySelector('.sliced-areas-root') as HTMLElement
+    root.innerHTML = ''
     expect(() => render()).toThrow(/Missing area content for/)
     collectSpy.mockRestore()
   })

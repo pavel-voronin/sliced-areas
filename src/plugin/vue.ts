@@ -12,6 +12,9 @@ import {
 
 import { registerSlicedAreasElement } from './sliced-areas'
 import type {
+  AreaAddedDetail,
+  AreaRemovedDetail,
+  AreaUpdatedDetail,
   AreaResolver,
   AreasLayout,
   CornerClickDetail,
@@ -21,11 +24,14 @@ import type {
 
 export type {
   AreaId,
+  AreaAddedDetail,
   AreaRect,
+  AreaRemovedDetail,
   AreaTag,
   AreasGraph,
   AreasLayout,
   AreaResolver,
+  AreaUpdatedDetail,
   CornerClickDetail,
   GraphArea,
   GraphEdge,
@@ -54,7 +60,7 @@ const SlicedAreas = defineComponent({
       default: null,
     },
   },
-  emits: ['layoutchange', 'cornerclick'],
+  emits: ['layoutchange', 'cornerclick', 'area-added', 'area-removed', 'area-updated'],
   setup(props, { emit, slots }) {
     const attrs = useAttrs()
     const elementRef = ref<SlicedAreasElement | null>(null)
@@ -69,16 +75,37 @@ const SlicedAreas = defineComponent({
       emit('cornerclick', customEvent.detail)
     }
 
+    const onAreaAdded = (event: Event) => {
+      const customEvent = event as CustomEvent<AreaAddedDetail>
+      emit('area-added', customEvent.detail)
+    }
+
+    const onAreaRemoved = (event: Event) => {
+      const customEvent = event as CustomEvent<AreaRemovedDetail>
+      emit('area-removed', customEvent.detail)
+    }
+
+    const onAreaUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<AreaUpdatedDetail>
+      emit('area-updated', customEvent.detail)
+    }
+
     onMounted(() => {
       const element = elementRef.value!
       element.addEventListener('sliced-areas:layoutchange', onLayoutChange)
       element.addEventListener('sliced-areas:cornerclick', onCornerClick)
+      element.addEventListener('sliced-areas:area-added', onAreaAdded)
+      element.addEventListener('sliced-areas:area-removed', onAreaRemoved)
+      element.addEventListener('sliced-areas:area-updated', onAreaUpdated)
     })
 
     onBeforeUnmount(() => {
       const element = elementRef.value!
       element.removeEventListener('sliced-areas:layoutchange', onLayoutChange)
       element.removeEventListener('sliced-areas:cornerclick', onCornerClick)
+      element.removeEventListener('sliced-areas:area-added', onAreaAdded)
+      element.removeEventListener('sliced-areas:area-removed', onAreaRemoved)
+      element.removeEventListener('sliced-areas:area-updated', onAreaUpdated)
     })
 
     watch(

@@ -76,7 +76,7 @@ export type AreasGraph = {
  * Serializable layout payload used by the host.
  */
 export type AreasLayout = {
-  areas: Array<{ tag: AreaTag; rect: AreaRect }>
+  areas: Array<{ id?: AreaId; tag: AreaTag; rect: AreaRect }>
 }
 
 /**
@@ -88,6 +88,21 @@ export type CornerClickDetail = {
   clientX: number
   clientY: number
 }
+
+/**
+ * Payload emitted when an area is added.
+ */
+export type AreaAddedDetail = { areaId: AreaId; tag: AreaTag; rect: AreaRect }
+
+/**
+ * Payload emitted when an area is removed.
+ */
+export type AreaRemovedDetail = { areaId: AreaId; tag: AreaTag }
+
+/**
+ * Payload emitted when an area is updated.
+ */
+export type AreaUpdatedDetail = { areaId: AreaId; tag: AreaTag; oldRect: AreaRect; newRect: AreaRect }
 
 /**
  * Alias for normalized rectangle geometry.
@@ -126,6 +141,22 @@ export type SlicedAreasOperation =
   | 'move'
   | 'maximize'
   | 'restore'
+
+/**
+ * Identifiers describing layout mutations.
+ */
+type GraphChangeReason =
+  | 'layout'
+  | 'split'
+  | 'join'
+  | 'swap'
+  | 'move'
+  | 'replace'
+  | 'close'
+  | 'retag'
+  | 'maximize'
+  | 'restore'
+  | 'resize'
 
 /**
  * Configuration for enabling or disabling operations.
@@ -402,9 +433,10 @@ export class SlicedAreasElement extends HTMLElement {
     }
     this.storedGraph = null
     this.storedTags = null
-    this.graph = this.buildGraphFromLayout(value)
-    this.resolvedNodes.clear()
-    this.render()
+    const oldGraph = this.graph
+    const oldTags = new Map(this.areaTags)
+    const newGraph = this.buildGraphFromLayout(value)
+    this.applyGraphChange(newGraph, 'layout', oldGraph, oldTags)
   }
 
   /**
@@ -477,9 +509,8 @@ export class SlicedAreasElement extends HTMLElement {
         : this.splitAreaByZone(this.graph, sourceAreaId, zone, DEFAULT_RATIO, newAreaId)
     if (!updated) return
     this.ensureAreaNode(newAreaId, sourceAreaId, true)
-    this.graph = this.normalizeGraph(updated)
-    this.emitLayoutChange()
-    this.render()
+    const normalized = this.normalizeGraph(updated)
+    this.applyGraphChange(normalized, 'split')
   }
 
   /**
@@ -492,12 +523,13 @@ export class SlicedAreasElement extends HTMLElement {
     if (!this.isOperationEnabled('join')) return
     if (!this.graph) return
     if (!this.canJoin(sourceAreaId, targetAreaId)) return
+    const oldGraph = this.graph
+    const oldTags = new Map(this.areaTags)
     const updated = this.joinAreas(this.graph, sourceAreaId, targetAreaId)
     if (!updated) return
-    this.graph = this.normalizeGraph(updated)
-    this.pruneAreaTags(this.graph)
-    this.emitLayoutChange()
-    this.render()
+    const normalized = this.normalizeGraph(updated)
+    this.applyGraphChange(normalized, 'join', oldGraph, oldTags)
+    this.pruneAreaTags(normalized)
   }
 
   /**
@@ -509,13 +541,14 @@ export class SlicedAreasElement extends HTMLElement {
   replace(sourceAreaId: AreaId, targetAreaId: AreaId): void {
     if (!this.isOperationEnabled('replace')) return
     if (!this.graph) return
+    const oldGraph = this.graph
+    const oldTags = new Map(this.areaTags)
     const updated = this.replaceArea(this.graph, sourceAreaId, targetAreaId)
     if (!updated) return
-    this.graph = this.normalizeGraph(updated)
     this.removeAreaNode(targetAreaId)
-    this.pruneAreaTags(this.graph)
-    this.emitLayoutChange()
-    this.render()
+    const normalized = this.normalizeGraph(updated)
+    this.applyGraphChange(normalized, 'replace', oldGraph, oldTags)
+    this.pruneAreaTags(normalized)
   }
 
   /**
@@ -529,9 +562,7 @@ export class SlicedAreasElement extends HTMLElement {
     if (!this.graph) return
     const updated = this.swapAreaIds(this.graph, sourceAreaId, targetAreaId)
     if (!updated) return
-    this.graph = updated
-    this.emitLayoutChange()
-    this.render()
+    this.applyGraphChange(updated, 'swap')
   }
 
   /**
@@ -547,9 +578,8 @@ export class SlicedAreasElement extends HTMLElement {
     if (!this.graph) return
     const updated = this.moveArea(this.graph, sourceAreaId, targetAreaId, overlay, remainder)
     if (!updated) return
-    this.graph = this.normalizeGraph(updated)
-    this.emitLayoutChange()
-    this.render()
+    const normalized = this.normalizeGraph(updated)
+    this.applyGraphChange(normalized, 'move')
   }
 
   /**
@@ -562,6 +592,8 @@ export class SlicedAreasElement extends HTMLElement {
     if (!this.graph.areas[areaId]) return
     if (Object.keys(this.graph.areas).length <= 1) return
 
+    const oldGraph = this.graph
+    const oldTags = new Map(this.areaTags)
     const next: AreasGraph = {
       verts: { ...this.graph.verts },
       edges: { ...this.graph.edges },
@@ -569,11 +601,10 @@ export class SlicedAreasElement extends HTMLElement {
     }
 
     delete next.areas[areaId]
-    this.graph = this.normalizeGraph(next)
     this.removeAreaNode(areaId)
-    this.pruneAreaTags(this.graph)
-    this.emitLayoutChange()
-    this.render()
+    const normalized = this.normalizeGraph(next)
+    this.applyGraphChange(normalized, 'close', oldGraph, oldTags)
+    this.pruneAreaTags(normalized)
   }
 
   /**
@@ -586,11 +617,12 @@ export class SlicedAreasElement extends HTMLElement {
     if (!this.graph) return
     if (!this.graph.areas[areaId]) return
     if (this.areaTags.get(areaId) === tag) return
+    const oldGraph = this.graph
+    const oldTags = new Map(this.areaTags)
     this.areaTags.set(areaId, tag)
     this.resolvedNodes.delete(areaId)
     this.detachAreaNode(areaId)
-    this.emitLayoutChange()
-    this.render()
+    this.applyGraphChange(this.graph, 'retag', oldGraph, oldTags)
   }
 
   /**
@@ -603,16 +635,18 @@ export class SlicedAreasElement extends HTMLElement {
     if (!this.graph) return
     if (this.storedGraph) return
     if (!this.graph.areas[areaId]) return
+    const oldGraph = this.graph
+    const oldTags = new Map(this.areaTags)
     this.storedGraph = this.graph
     this.storedTags = new Map(this.areaTags)
-    this.graph = this.createBaseGraph(areaId)
-    this.areaTags = new Map()
+    const nextGraph = this.createBaseGraph(areaId)
+    const nextTags = new Map<AreaId, AreaTag>()
     const tag = this.storedTags.get(areaId)
     if (tag) {
-      this.areaTags.set(areaId, tag)
+      nextTags.set(areaId, tag)
     }
-    this.emitLayoutChange()
-    this.render()
+    this.areaTags = nextTags
+    this.applyGraphChange(nextGraph, 'maximize', oldGraph, oldTags)
   }
 
   /**
@@ -621,14 +655,14 @@ export class SlicedAreasElement extends HTMLElement {
   restore(): void {
     if (!this.isOperationEnabled('restore')) return
     if (!this.storedGraph) return
-    this.graph = this.storedGraph
-    if (this.storedTags) {
-      this.areaTags = new Map(this.storedTags)
-    }
+    const oldGraph = this.graph
+    const oldTags = new Map(this.areaTags)
+    const restoredGraph = this.storedGraph
+    const restoredTags = this.storedTags ? new Map(this.storedTags) : new Map<AreaId, AreaTag>()
     this.storedGraph = null
     this.storedTags = null
-    this.emitLayoutChange()
-    this.render()
+    this.areaTags = restoredTags
+    this.applyGraphChange(restoredGraph, 'restore', oldGraph, oldTags)
   }
 
   /**
@@ -699,6 +733,150 @@ export class SlicedAreasElement extends HTMLElement {
   }
 
   /**
+   * Computes the difference between two graphs and tag sets.
+   */
+  private calculateLayoutDiff(
+    oldGraph: AreasGraph | null,
+    oldTags: Map<AreaId, AreaTag>,
+    newGraph: AreasGraph,
+    newTags: Map<AreaId, AreaTag>,
+  ): {
+    added: AreaId[]
+    removed: AreaId[]
+    updated: AreaId[]
+  } {
+    const added: AreaId[] = []
+    const removed: AreaId[] = []
+    const updated: AreaId[] = []
+
+    const oldIds = new Set(oldGraph ? Object.keys(oldGraph.areas) : [])
+    const newIds = new Set(Object.keys(newGraph.areas))
+
+    for (const id of newIds) {
+      if (!oldIds.has(id)) {
+        added.push(id)
+        continue
+      }
+      const oldArea = oldGraph!.areas[id]
+      const newArea = newGraph.areas[id]
+      if (!oldArea || !newArea) continue
+      const oldRect = this.getAreaRect(oldGraph!, oldArea)
+      const newRect = this.getAreaRect(newGraph, newArea)
+      const oldTag = oldTags.get(id)
+      const newTag = newTags.get(id)
+
+      const rectChanged =
+        Math.abs(oldRect.left - newRect.left) > EPS ||
+        Math.abs(oldRect.top - newRect.top) > EPS ||
+        Math.abs(oldRect.right - newRect.right) > EPS ||
+        Math.abs(oldRect.bottom - newRect.bottom) > EPS
+
+      if (rectChanged || oldTag !== newTag) {
+        updated.push(id)
+      }
+    }
+
+    for (const id of oldIds) {
+      if (!newIds.has(id)) {
+        removed.push(id)
+      }
+    }
+
+    return { added, removed, updated }
+  }
+
+  /**
+   * Applies a graph update and emits events as needed.
+   */
+  private applyGraphChange(
+    newGraph: AreasGraph,
+    reason: GraphChangeReason,
+    oldGraph: AreasGraph | null = this.graph,
+    oldTags: Map<AreaId, AreaTag> = new Map(this.areaTags),
+  ): void {
+    this.graph = newGraph
+
+    if (oldGraph) {
+      const diff = this.calculateLayoutDiff(oldGraph, oldTags, newGraph, this.areaTags)
+
+      for (const id of diff.removed) {
+        this.resolvedNodes.delete(id)
+      }
+
+      for (const id of diff.updated) {
+        const oldTag = oldTags.get(id)
+        const newTag = this.areaTags.get(id)
+        if (oldTag !== newTag) {
+          this.resolvedNodes.delete(id)
+        }
+      }
+
+      this.render()
+      this.emitLayoutChange()
+
+      if (reason !== 'maximize' && reason !== 'restore') {
+        this.emitGranularEvents(diff, oldGraph, oldTags)
+      }
+    } else {
+      this.render()
+    }
+  }
+
+  /**
+   * Emits granular area events for added/removed/updated items.
+   */
+  private emitGranularEvents(
+    diff: { added: AreaId[]; removed: AreaId[]; updated: AreaId[] },
+    oldGraph: AreasGraph,
+    oldTags: Map<AreaId, AreaTag>,
+  ): void {
+    if (!this.graph) return
+
+    for (const id of diff.added) {
+      const area = this.graph.areas[id]
+      if (!area) continue
+      this.dispatchEvent(
+        new CustomEvent<AreaAddedDetail>('sliced-areas:area-added', {
+          detail: {
+            areaId: id,
+            tag: this.areaTags.get(id) ?? id,
+            rect: this.formatRect(this.getAreaRect(this.graph, area)),
+          },
+        }),
+      )
+    }
+
+    for (const id of diff.removed) {
+      this.dispatchEvent(
+        new CustomEvent<AreaRemovedDetail>('sliced-areas:area-removed', {
+          detail: {
+            areaId: id,
+            tag: oldTags.get(id) ?? id,
+          },
+        }),
+      )
+    }
+
+    for (const id of diff.updated) {
+      const area = this.graph.areas[id]
+      if (!area) continue
+      const oldRect = oldGraph.areas[id]
+        ? this.getAreaRect(oldGraph, oldGraph.areas[id])
+        : { left: 0, top: 1, right: 1, bottom: 0 }
+      this.dispatchEvent(
+        new CustomEvent<AreaUpdatedDetail>('sliced-areas:area-updated', {
+          detail: {
+            areaId: id,
+            tag: this.areaTags.get(id) ?? id,
+            oldRect: this.formatRect(oldRect),
+            newRect: this.formatRect(this.getAreaRect(this.graph, area)),
+          },
+        }),
+      )
+    }
+  }
+
+  /**
    * Rebuilds the enabled operation set and re-renders.
    */
   private syncOperations(): void {
@@ -747,6 +925,97 @@ export class SlicedAreasElement extends HTMLElement {
   }
 
   /**
+   * Reconciles area wrappers without tearing down the DOM tree.
+   */
+  private reconcileAreaWrappers(areaNodes: Map<AreaId, HTMLElement>): void {
+    if (!this.rootEl || !this.graph) return
+
+    const rect = this.rootEl.getBoundingClientRect()
+    const width = Math.max(rect.width, 1)
+    const height = Math.max(rect.height, 1)
+    const splitterInset = DEFAULT_SPLITTER_SIZE / 2
+
+    const existingWrappers = new Map<AreaId, HTMLDivElement>()
+    const wrapperElements = this.rootEl.querySelectorAll<HTMLDivElement>('.sliced-areas-area')
+
+    for (const wrapper of wrapperElements) {
+      const overlay = wrapper.querySelector('.sliced-areas-overlay')
+      const handle = overlay?.querySelector('.sliced-areas-corner')
+      const areaId = handle?.getAttribute('data-area-id')
+      if (areaId) {
+        existingWrappers.set(areaId, wrapper)
+      }
+    }
+
+    for (const area of Object.values(this.graph.areas)) {
+      const areaRect = this.getAreaRect(this.graph, area)
+      const left = areaRect.left * width + splitterInset
+      const top = (1 - areaRect.top) * height + splitterInset
+      const areaWidth = (areaRect.right - areaRect.left) * width - splitterInset * 2
+      const areaHeight = (areaRect.top - areaRect.bottom) * height - splitterInset * 2
+
+      const existingWrapper = existingWrappers.get(area.id)
+      if (existingWrapper) {
+        existingWrapper.style.left = `${left}px`
+        existingWrapper.style.top = `${top}px`
+        existingWrapper.style.width = `${Math.max(areaWidth, 0)}px`
+        existingWrapper.style.height = `${Math.max(areaHeight, 0)}px`
+
+        const currentNode = Array.from(existingWrapper.children).find(
+          (child) => !child.hasAttribute(INTERNAL_ATTR),
+        )
+        const expectedNode = areaNodes.get(area.id)
+        if (expectedNode && currentNode !== expectedNode) {
+          if (currentNode) {
+            currentNode.remove()
+          }
+          existingWrapper.appendChild(expectedNode)
+        }
+
+        existingWrappers.delete(area.id)
+        continue
+      }
+
+      const wrapper = document.createElement('div')
+      wrapper.classList.add('sliced-areas-area')
+      wrapper.setAttribute(INTERNAL_ATTR, 'true')
+      wrapper.style.left = `${left}px`
+      wrapper.style.top = `${top}px`
+      wrapper.style.width = `${Math.max(areaWidth, 0)}px`
+      wrapper.style.height = `${Math.max(areaHeight, 0)}px`
+
+      const overlay = document.createElement('div')
+      overlay.classList.add('sliced-areas-overlay')
+      overlay.setAttribute(INTERNAL_ATTR, 'true')
+      wrapper.appendChild(overlay)
+
+      const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const
+      for (const corner of corners) {
+        const handle = document.createElement('div')
+        handle.classList.add('sliced-areas-corner')
+        handle.classList.add(`is-${corner}`)
+        handle.setAttribute(INTERNAL_ATTR, 'true')
+        handle.dataset.areaId = area.id
+        handle.dataset.corner = corner
+        overlay.appendChild(handle)
+      }
+
+      const areaNode = areaNodes.get(area.id)
+      if (areaNode) {
+        wrapper.appendChild(areaNode)
+      } else {
+        throw new Error(`Missing area content for ${area.id}`)
+      }
+
+      this.rootEl.appendChild(wrapper)
+    }
+
+    for (const [_areaId, wrapper] of existingWrappers) {
+      wrapper.remove()
+    }
+  }
+
+  /**
    * Renders the current graph into positioned DOM nodes.
    */
   private render(): void {
@@ -787,52 +1056,8 @@ export class SlicedAreasElement extends HTMLElement {
       }
       throw new Error(`Missing area content detected: ${JSON.stringify(detail)}`)
     }
-    const rect = this.rootEl.getBoundingClientRect()
-    const width = Math.max(rect.width, 1)
-    const height = Math.max(rect.height, 1)
-    const splitterInset = DEFAULT_SPLITTER_SIZE / 2
 
-    this.rootEl.innerHTML = ''
-
-    for (const area of Object.values(this.graph.areas)) {
-      const areaRect = this.getAreaRect(this.graph, area)
-      const wrapper = document.createElement('div')
-      wrapper.classList.add('sliced-areas-area')
-      wrapper.setAttribute(INTERNAL_ATTR, 'true')
-      const left = areaRect.left * width + splitterInset
-      const top = (1 - areaRect.top) * height + splitterInset
-      const areaWidth = (areaRect.right - areaRect.left) * width - splitterInset * 2
-      const areaHeight = (areaRect.top - areaRect.bottom) * height - splitterInset * 2
-      wrapper.style.left = `${left}px`
-      wrapper.style.top = `${top}px`
-      wrapper.style.width = `${Math.max(areaWidth, 0)}px`
-      wrapper.style.height = `${Math.max(areaHeight, 0)}px`
-
-      const overlay = document.createElement('div')
-      overlay.classList.add('sliced-areas-overlay')
-      overlay.setAttribute(INTERNAL_ATTR, 'true')
-      wrapper.appendChild(overlay)
-
-      const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const
-      for (const corner of corners) {
-        const handle = document.createElement('div')
-        handle.classList.add('sliced-areas-corner')
-        handle.classList.add(`is-${corner}`)
-        handle.setAttribute(INTERNAL_ATTR, 'true')
-        handle.dataset.areaId = area.id
-        handle.dataset.corner = corner
-        overlay.appendChild(handle)
-      }
-
-      const areaNode = areaNodes.get(area.id)
-      if (areaNode) {
-        wrapper.appendChild(areaNode)
-      } else {
-        throw new Error(`Missing area content for ${area.id}`)
-      }
-
-      this.rootEl.appendChild(wrapper)
-    }
+    this.reconcileAreaWrappers(areaNodes)
 
     if (this.stashEl) {
       for (const [areaId, node] of areaNodes.entries()) {
@@ -842,7 +1067,15 @@ export class SlicedAreasElement extends HTMLElement {
       }
     }
 
+    const oldHandles = this.rootEl.querySelectorAll('.sliced-areas-handle')
+    for (const handle of oldHandles) {
+      handle.remove()
+    }
+
     if (this.isOperationEnabled('resize')) {
+      const rect = this.rootEl.getBoundingClientRect()
+      const width = Math.max(rect.width, 1)
+      const height = Math.max(rect.height, 1)
       for (const handle of this.buildResizeHandles(this.graph, width, height)) {
         this.rootEl.appendChild(handle)
       }
@@ -965,6 +1198,39 @@ export class SlicedAreasElement extends HTMLElement {
   }
 
   /**
+   * Ensures every layout item has a stable area id.
+   */
+  private assignAreaIds(layout: AreasLayout): Array<{ id: AreaId; tag: AreaTag; rect: Rect }> {
+    const seen = new Set<AreaId>()
+    const result: Array<{ id: AreaId; tag: AreaTag; rect: Rect }> = []
+
+    for (const area of layout.areas) {
+      let id: AreaId
+      if (area.id) {
+        if (seen.has(area.id)) {
+          throw new Error(`Duplicate area ID: ${area.id}`)
+        }
+        id = area.id
+        const match = /^area-(\d+)$/.exec(id)
+        if (match) {
+          /* v8 ignore next */
+          const num = Number.parseInt(match[1] ?? '0', 10)
+          /* v8 ignore next */
+          if (num >= this.areaCounter) {
+            this.areaCounter = num
+          }
+        }
+      } else {
+        id = this.nextAreaId()
+      }
+      seen.add(id)
+      result.push({ id, tag: area.tag, rect: area.rect })
+    }
+
+    return result
+  }
+
+  /**
    * Builds a graph from a serialized layout payload.
    *
    * @param layout Serialized layout data.
@@ -972,11 +1238,12 @@ export class SlicedAreasElement extends HTMLElement {
    */
   private buildGraphFromLayout(layout: AreasLayout): AreasGraph {
     this.areaTags.clear()
+    const assigned = this.assignAreaIds(layout)
     const rects: Array<{ id: AreaId; rect: Rect }> = []
-    for (const area of layout.areas) {
-      const id = this.nextAreaId()
-      rects.push({ id, rect: area.rect })
-      this.areaTags.set(id, area.tag)
+
+    for (const item of assigned) {
+      rects.push({ id: item.id, rect: item.rect })
+      this.areaTags.set(item.id, item.tag)
     }
     const graph = this.buildGraphFromRects(rects)
     return this.normalizeGraph(graph)
@@ -991,6 +1258,7 @@ export class SlicedAreasElement extends HTMLElement {
   private serializeLayout(graph: AreasGraph): AreasLayout {
     return {
       areas: Object.values(graph.areas).map((area) => ({
+        id: area.id,
         tag: this.areaTags.get(area.id) ?? area.id,
         rect: this.formatRect(this.getAreaRect(graph, area)),
       })),
@@ -2134,11 +2402,10 @@ export class SlicedAreasElement extends HTMLElement {
     )
     if (!updated) return
 
-    this.graph = updated
+    this.applyGraphChange(updated, 'resize')
     this.dragState.coord = nextCoord
     this.dragState.originX = event.clientX
     this.dragState.originY = event.clientY
-    this.render()
   }
 
   /**
@@ -2167,9 +2434,12 @@ export class SlicedAreasElement extends HTMLElement {
     this.detachKeyListener()
     this.dragSnapshot = null
     if (this.graph) {
-      this.graph = this.normalizeGraph(this.graph)
+      const normalized = this.normalizeGraph(this.graph)
+      if (normalized !== this.graph) {
+        this.graph = normalized
+        this.render()
+      }
     }
-    this.emitLayoutChange()
   }
 
   /**

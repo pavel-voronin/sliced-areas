@@ -262,6 +262,63 @@ type CornerClickDetail = {
 }
 ```
 
+### `@area-added`
+
+Emitted when a new area appears.
+
+- **Type**: `CustomEvent<AreaAddedDetail>`
+- **Payload**: `AreaAddedDetail`
+
+```vue
+<script setup>
+const handleAreaAdded = (detail) => {
+  console.log('Area added:', detail.areaId, detail.tag)
+}
+</script>
+
+<template>
+  <SlicedAreas @area-added="handleAreaAdded" />
+</template>
+```
+
+### `@area-removed`
+
+Emitted when an area is removed.
+
+- **Type**: `CustomEvent<AreaRemovedDetail>`
+- **Payload**: `AreaRemovedDetail`
+
+```vue
+<script setup>
+const handleAreaRemoved = (detail) => {
+  console.log('Area removed:', detail.areaId, detail.tag)
+}
+</script>
+
+<template>
+  <SlicedAreas @area-removed="handleAreaRemoved" />
+</template>
+```
+
+### `@area-updated`
+
+Emitted when an area changes geometry or tag.
+
+- **Type**: `CustomEvent<AreaUpdatedDetail>`
+- **Payload**: `AreaUpdatedDetail`
+
+```vue
+<script setup>
+const handleAreaUpdated = (detail) => {
+  console.log('Area updated:', detail.areaId, detail.tag)
+}
+</script>
+
+<template>
+  <SlicedAreas @area-updated="handleAreaUpdated" />
+</template>
+```
+
 ## Template Ref
 
 Access the underlying Web Component element via template ref.
