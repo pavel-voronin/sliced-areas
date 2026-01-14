@@ -21,11 +21,14 @@ const layout = ref<AreasLayout>({
   ],
 })
 
-const resolver = (tag: string) => {
+const resolver = (tag: string, areaId: string) => {
   const panel = document.createElement('div')
   panel.textContent = `Area: ${tag}`
   panel.style.cssText = 'height: 100%; display: grid; place-items: center;'
-  return panel
+  return {
+    element: panel,
+    cleanup: () => console.log(`Cleanup ${areaId}`)
+  }
 }
 
 const handleLayoutChange = (detail: { layout: AreasLayout }) => {

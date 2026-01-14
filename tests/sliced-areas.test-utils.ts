@@ -38,9 +38,12 @@ export const setupElement = (): SlicedAreasElement => {
 }
 
 export const setResolver = (el: SlicedAreasElement) => {
-  el.setResolver((tag) => {
+  el.setResolver((tag, areaId?: string) => {
     const node = document.createElement('div')
     node.textContent = tag
+    if (areaId) {
+      node.dataset.testAreaId = areaId
+    }
     return node
   })
 }

@@ -17,7 +17,7 @@ import 'sliced-areas'
 
 const el = document.querySelector('sliced-areas')
 el.layout = { areas: [...] }
-el.setResolver(tag => ...)
+el.setResolver((tag, areaId) => ...)
 ```
 
 [Full Web Component API →](/api/web-component)
@@ -42,6 +42,7 @@ import { SlicedAreas } from 'sliced-areas/vue'
 import type {
   AreasLayout,
   AreaResolver,
+  AreaResolverResult,
   SlicedAreasElement,
   CornerClickDetail
 } from 'sliced-areas'

@@ -57,10 +57,13 @@ const layout = ref<AreasLayout>({
   areas: [{ tag: 'viewport', rect: { left: 0, right: 1, top: 1, bottom: 0 } }]
 })
 
-const resolveArea = (tag: string) => {
+const resolveArea = (tag: string, areaId: string) => {
   const div = document.createElement('div')
   div.textContent = `Content for: ${tag}`
-  return div
+  return {
+    element: div,
+    cleanup: () => console.log(`Cleanup ${areaId}`)
+  }
 }
 
 const onLayoutChange = (detail: { layout: AreasLayout }) => {

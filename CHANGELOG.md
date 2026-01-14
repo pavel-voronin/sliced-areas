@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0
+
+- Expanded resolver API to provide `areaId` and support optional cleanup callbacks for area teardown.
+- Fixed declarative tag updates leaving stale DOM nodes behind.
+- Added cleanup handling across node removal paths, with updated tests and documentation.
+
 ## 2.0.0
 
 - Added stable area IDs to the serialized layout, preserving DOM nodes across updates and preventing context loss (WebGL/Teleport).

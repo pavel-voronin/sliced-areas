@@ -94,10 +94,13 @@ Content resolver function.
 
 ```vue
 <script setup>
-const resolveArea = (tag) => {
+const resolveArea = (tag, areaId) => {
   const div = document.createElement('div')
   div.textContent = `Area: ${tag}`
-  return div
+  return {
+    element: div,
+    cleanup: () => console.log(`Cleanup ${areaId}`)
+  }
 }
 </script>
 
@@ -109,7 +112,21 @@ const resolveArea = (tag) => {
 **Type Definition:**
 
 ```ts
-type AreaResolver = (tag: string) => HTMLElement | null | undefined
+type AreaResolver = {
+  (tag: string, areaId: string): AreaResolverResult
+  (tag: string): AreaResolverResult
+}
+```
+
+```ts
+type AreaResolverResult =
+  | HTMLElement
+  | {
+      element: HTMLElement
+      cleanup?: () => void
+    }
+  | null
+  | undefined
 ```
 
 ### `operations`
@@ -396,6 +413,7 @@ Full TypeScript support is included.
 import type {
   AreasLayout,
   AreaResolver,
+  AreaResolverResult,
   AreaId,
   AreaTag,
   AreaRect,
@@ -410,7 +428,7 @@ import type {
 <script setup lang="ts">
 import { ref } from 'vue'
 import { SlicedAreas } from 'sliced-areas/vue'
-import type { AreasLayout, AreaResolver } from 'sliced-areas/vue'
+import type { AreasLayout, AreaResolver, AreaResolverResult, AreaId } from 'sliced-areas/vue'
 import 'sliced-areas/styles.css'
 
 const layout = ref<AreasLayout>({
@@ -426,10 +444,10 @@ const layout = ref<AreasLayout>({
   ]
 })
 
-const resolveArea: AreaResolver = (tag: string): HTMLElement | null => {
+const resolveArea: AreaResolver = (tag: string, areaId: AreaId): AreaResolverResult => {
   const div = document.createElement('div')
   div.textContent = tag
-  return div
+  return { element: div, cleanup: () => console.log(`Cleanup ${areaId}`) }
 }
 
 const handleLayoutChange = (detail: { layout: AreasLayout }): void => {
@@ -455,7 +473,7 @@ Create a reusable composable for managing areas:
 ```ts
 // composables/useSlicedAreas.ts
 import { ref } from 'vue'
-import type { AreasLayout, AreaResolver } from 'sliced-areas/vue'
+import type { AreasLayout, AreaResolver, AreaResolverResult, AreaId } from 'sliced-areas/vue'
 
 export function useSlicedAreas(storageKey: string) {
   const layout = ref<AreasLayout | null>(null)
@@ -547,7 +565,7 @@ const components = {
   preview: PreviewArea
 }
 
-const resolveArea: AreaResolver = (tag: string): HTMLElement | null => {
+const resolveArea: AreaResolver = (tag: string, areaId: AreaId): AreaResolverResult => {
   const Component = components[tag]
   if (!Component) return null
 
@@ -557,7 +575,13 @@ const resolveArea: AreaResolver = (tag: string): HTMLElement | null => {
   const app = createApp(Component)
   app.mount(container)
 
-  return container
+  return {
+    element: container,
+    cleanup: () => {
+      console.log(`Unmount ${areaId}`)
+      app.unmount()
+    },
+  }
 }
 
 const handleLayoutChange = (detail: { layout: AreasLayout }): void => {

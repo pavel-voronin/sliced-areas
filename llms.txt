@@ -1,0 +1,146 @@
+# Sliced Areas (LLMs)
+
+Concise documentation for LLMs. Source of truth: code in `src/plugin` and docs in `docs/`.
+
+## What it is
+
+Sliced Areas is a **Blender-like layout system** implemented as a **Web Component** (`<sliced-areas>`) with a Vue 3 wrapper. It renders **light DOM** (no Shadow DOM). Content is provided by the host via a resolver function; the library only positions it.
+
+## Key Concepts
+
+- **Layout model**: planar graph of vertices, edges, and rectangular areas; coordinates normalized to 0..1.
+- **Area IDs**: stable identifiers used internally and exposed to host. If not provided, auto-assigned.
+- **Rendering**: always fills container; only positions host content.
+- **Non-goals**: no tree-based layout, no content decisions.
+
+## Installation
+
+- CSS: `import 'sliced-areas/styles.css'`
+- Web component: `import 'sliced-areas'` (or `./plugin/sliced-areas` in repo)
+- Vue wrapper: `import { SlicedAreas } from 'sliced-areas/vue'`
+
+## Layout Type
+
+```ts
+type AreasLayout = {
+  areas: Array<{
+    id?: string
+    tag: string
+    rect: { left: number; right: number; top: number; bottom: number }
+  }>
+}
+```
+
+## Resolver API (IMPORTANT)
+
+```ts
+type AreaResolverResult =
+  | HTMLElement
+  | { element: HTMLElement; cleanup?: () => void }
+  | null
+  | undefined
+
+type AreaResolver = {
+  (tag: string, areaId: string): AreaResolverResult
+  (tag: string): AreaResolverResult // legacy
+}
+```
+
+- Called when content is needed.
+- `areaId` is stable for the area instance.
+- If `cleanup` is provided, it is called when the area is removed/replaced/retagged or resolver changes.
+
+## Web Component API (`<sliced-areas>`)
+
+Properties:
+
+- `layout: AreasLayout | null`
+- `operations: { enable?: Operation[]; disable?: Operation[] }`
+- `graph: AreasGraph | null` (read-only, for debugging)
+
+Methods:
+
+- `setResolver(resolver: AreaResolver | null): void`
+- `split(areaId, zone?, x?, y?)`
+- `join(areaIdA, areaIdB)`
+- `replace(areaIdA, areaIdB)`
+- `move(areaIdA, areaIdB, overlayRect, remainderRect)`
+- `swap(areaIdA, areaIdB)`
+- `close(areaId)`
+- `retag(areaId, tag)`
+- `maximize(areaId)` / `restore()`
+
+Operations:
+
+```
+'resize' | 'split' | 'join' | 'replace' | 'swap' | 'move' | 'maximize' | 'restore'
+```
+
+Events:
+
+- `sliced-areas:layoutchange` `{ layout }`
+- `sliced-areas:area-added` `{ areaId, tag, rect }`
+- `sliced-areas:area-removed` `{ areaId, tag }`
+- `sliced-areas:area-updated` `{ areaId, tag, oldRect, newRect }`
+- `sliced-areas:cornerclick` `{ areaId, corner, clientX, clientY }`
+
+## Vue Wrapper
+
+Component: `<SlicedAreas>`
+
+Props:
+
+- `layout?: AreasLayout | null`
+- `resolver?: AreaResolver | null`
+- `operations?: SlicedAreasOperationsConfig | null`
+
+Emits:
+
+- `layoutchange`, `cornerclick`, `area-added`, `area-removed`, `area-updated`
+
+Example:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { SlicedAreas } from 'sliced-areas/vue'
+import type { AreasLayout, AreaResolver } from 'sliced-areas/vue'
+import 'sliced-areas/styles.css'
+
+const layout = ref<AreasLayout>({
+  areas: [
+    { tag: 'left', rect: { left: 0, right: 0.5, top: 1, bottom: 0 } },
+    { tag: 'right', rect: { left: 0.5, right: 1, top: 1, bottom: 0 } }
+  ]
+})
+
+const resolver: AreaResolver = (tag, areaId) => {
+  const el = document.createElement('div')
+  el.textContent = tag
+  return { element: el, cleanup: () => console.log(`cleanup ${areaId}`) }
+}
+</script>
+
+<template>
+  <SlicedAreas :layout="layout" :resolver="resolver" style="width: 100%; height: 100%" />
+</template>
+```
+
+## Styling
+
+- Styles in `styles.css`; no Shadow DOM, so your app CSS can style content directly.
+- Internal nodes are marked with `data-sliced-areas-internal`.
+
+## Resolver lifecycle guarantees
+
+- `cleanup` called on: close, replace, retag, declarative tag change, resolver change, node replacement.
+- Cleanup errors are caught and logged to `console.error`.
+
+## Repository paths (for contributors)
+
+- Core: `src/plugin/sliced-areas.ts`
+- Vue wrapper: `src/plugin/vue.ts`
+- CSS: `src/plugin/styles.css`
+- Docs: `docs/`
+- Tests: `tests/` (coverage target 100% for plugin code)
+

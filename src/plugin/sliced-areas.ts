@@ -125,9 +125,26 @@ type JoinDir = 'west' | 'east' | 'north' | 'south' | 'none'
 type RemainderInfo = { id: AreaId; sourceAreaId: AreaId }
 
 /**
- * Resolves host content for an area tag.
+ * Result returned by an area resolver.
  */
-export type AreaResolver = (tag: AreaTag) => HTMLElement | null | undefined
+export type AreaResolverResult =
+  | HTMLElement
+  | {
+      element: HTMLElement
+      cleanup?: () => void
+    }
+  | null
+  | undefined
+
+/**
+ * Resolves host content for an area tag.
+ * @param tag - External tag used to identify the area content type
+ * @param areaId - Stable identifier for the specific area instance
+ */
+export type AreaResolver = {
+  (tag: AreaTag, areaId: AreaId): AreaResolverResult
+  (tag: AreaTag): AreaResolverResult
+}
 
 /**
  * Supported operation identifiers for interactive actions.
@@ -378,6 +395,11 @@ export class SlicedAreasElement extends HTMLElement {
   private resolvedNodes = new Map<AreaId, HTMLElement>()
 
   /**
+   * Cleanup callbacks for resolved area nodes.
+   */
+  private cleanupCallbacks = new Map<AreaId, () => void>()
+
+  /**
    * Tag mapping for areas in the current graph.
    */
   private areaTags = new Map<AreaId, AreaTag>()
@@ -457,6 +479,14 @@ export class SlicedAreasElement extends HTMLElement {
    * @param resolver Callback for resolving an area tag to a node.
    */
   setResolver(resolver: AreaResolver | null): void {
+    for (const [areaId, cleanup] of this.cleanupCallbacks.entries()) {
+      try {
+        cleanup()
+      } catch (error) {
+        console.error(`Error during cleanup for area ${areaId}:`, error)
+      }
+    }
+    this.cleanupCallbacks.clear()
     this.areaResolver = resolver
     this.resolvedNodes.clear()
     if (resolver) {
@@ -808,6 +838,7 @@ export class SlicedAreasElement extends HTMLElement {
         const newTag = this.areaTags.get(id)
         if (oldTag !== newTag) {
           this.resolvedNodes.delete(id)
+          this.detachAreaNode(id)
         }
       }
 
@@ -967,6 +998,15 @@ export class SlicedAreasElement extends HTMLElement {
         const expectedNode = areaNodes.get(area.id)
         if (expectedNode && currentNode !== expectedNode) {
           if (currentNode) {
+            const cleanup = this.cleanupCallbacks.get(area.id)
+            if (cleanup) {
+              try {
+                cleanup()
+              } catch (error) {
+                console.error(`Error during cleanup for area ${area.id}:`, error)
+              }
+              this.cleanupCallbacks.delete(area.id)
+            }
             currentNode.remove()
           }
           existingWrapper.appendChild(expectedNode)
@@ -1035,7 +1075,8 @@ export class SlicedAreasElement extends HTMLElement {
           continue
         }
         const tag = this.areaTags.get(area.id) ?? area.id
-        const resolved = this.areaResolver(tag)
+        const result = this.areaResolver(tag, area.id)
+        const resolved = this.extractResolverElement(result, area.id)
         if (resolved) {
           this.assertFreshResolvedNode(area.id, tag, resolved)
           resolved.dataset.areaId = area.id
@@ -1135,6 +1176,29 @@ export class SlicedAreasElement extends HTMLElement {
   }
 
   /**
+   * Extracts element and cleanup callback from resolver result.
+   */
+  private extractResolverElement(result: AreaResolverResult, areaId: AreaId): HTMLElement | null {
+    if (!result) {
+      return null
+    }
+
+    if (result instanceof HTMLElement) {
+      return result
+    }
+
+    if (typeof result === 'object' && 'element' in result) {
+      const { element, cleanup } = result
+      if (cleanup && typeof cleanup === 'function') {
+        this.cleanupCallbacks.set(areaId, cleanup)
+      }
+      return element
+    }
+
+    return null
+  }
+
+  /**
    * Ensures a DOM node exists for a newly created area.
    *
    * @param newAreaId Area id needing a node.
@@ -1163,7 +1227,8 @@ export class SlicedAreasElement extends HTMLElement {
     }
 
     if (sourceTag && this.areaResolver) {
-      const resolved = this.areaResolver(sourceTag)
+      const result = this.areaResolver(sourceTag, newAreaId)
+      const resolved = this.extractResolverElement(result, newAreaId)
       if (resolved) {
         this.assertFreshResolvedNode(newAreaId, sourceTag, resolved)
         resolved.dataset.areaId = newAreaId
@@ -1275,6 +1340,7 @@ export class SlicedAreasElement extends HTMLElement {
       if (!graph.areas[areaId]) {
         this.areaTags.delete(areaId)
         this.resolvedNodes.delete(areaId)
+        this.cleanupCallbacks.delete(areaId)
       }
     }
   }
@@ -1914,9 +1980,23 @@ export class SlicedAreasElement extends HTMLElement {
     )
     if (node) {
       if (targetNode) {
+        const cleanup = this.cleanupCallbacks.get(fromId)
+        if (cleanup) {
+          try {
+            cleanup()
+          } catch (error) {
+            console.error(`Error during cleanup for area ${fromId}:`, error)
+          }
+          this.cleanupCallbacks.delete(fromId)
+        }
         node.remove()
       } else {
         node.dataset.areaId = toId
+        const cleanup = this.cleanupCallbacks.get(fromId)
+        if (cleanup) {
+          this.cleanupCallbacks.delete(fromId)
+          this.cleanupCallbacks.set(toId, cleanup)
+        }
       }
     }
 
@@ -1941,6 +2021,15 @@ export class SlicedAreasElement extends HTMLElement {
    * @param areaId Area to remove.
    */
   private removeAreaNode(areaId: AreaId): void {
+    const cleanup = this.cleanupCallbacks.get(areaId)
+    if (cleanup) {
+      try {
+        cleanup()
+      } catch (error) {
+        console.error(`Error during cleanup for area ${areaId}:`, error)
+      }
+      this.cleanupCallbacks.delete(areaId)
+    }
     const node = Array.from(this.querySelectorAll<HTMLElement>(`[data-area-id="${areaId}"]`)).find(
       (item) => !item.hasAttribute(INTERNAL_ATTR),
     )
@@ -1949,6 +2038,7 @@ export class SlicedAreasElement extends HTMLElement {
     }
     this.areaTags.delete(areaId)
     this.resolvedNodes.delete(areaId)
+    this.cleanupCallbacks.delete(areaId)
   }
 
   /**
@@ -1957,6 +2047,15 @@ export class SlicedAreasElement extends HTMLElement {
    * @param areaId Area to detach.
    */
   private detachAreaNode(areaId: AreaId): void {
+    const cleanup = this.cleanupCallbacks.get(areaId)
+    if (cleanup) {
+      try {
+        cleanup()
+      } catch (error) {
+        console.error(`Error during cleanup for area ${areaId}:`, error)
+      }
+      this.cleanupCallbacks.delete(areaId)
+    }
     const node = Array.from(this.querySelectorAll<HTMLElement>(`[data-area-id="${areaId}"]`)).find(
       (item) => !item.hasAttribute(INTERNAL_ATTR),
     )

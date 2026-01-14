@@ -180,27 +180,30 @@ Sliced Areas uses **Light DOM** (not Shadow DOM):
 The resolver function creates content on demand:
 
 ```js
-element.setResolver((tag) => {
+element.setResolver((tag, areaId) => {
   // Create and return an HTMLElement
   const div = document.createElement('div')
   div.textContent = tag
-  return div
+  return {
+    element: div,
+    cleanup: () => console.log(`Cleanup ${areaId}`)
+  }
 })
 ```
 
 **How it works:**
 
-1. When an area needs content, the resolver is called with its tag
-2. You return an HTMLElement (or null to skip)
+1. When an area needs content, the resolver is called with its tag and area id
+2. You return an HTMLElement (or `{ element, cleanup }`) or null to skip
 3. The element is inserted into the area's container
-4. When tags change, old content is detached and new content is inserted
+4. When tags change or areas close, old content is detached and cleanup runs
 
 **Benefits:**
 
 - **Lazy loading**: Create content only when needed
 - **Dynamic content**: Change based on application state
 - **Framework integration**: Mount Vue/React components
-- **Memory efficient**: Detached content can be garbage collected
+- **Memory efficient**: Detached content can be garbage collected after cleanup
 
 ### Stash Container
 
@@ -327,7 +330,7 @@ Choose meaningful tags:
 Return null for unknown tags:
 
 ```js
-const resolver = (tag) => {
+const resolver = (tag, _areaId) => {
   const handlers = {
     editor: createEditor,
     preview: createPreview
@@ -364,8 +367,8 @@ const resetLayout = () => {
 Leverage types for safety:
 
 ```ts
-import type { AreasLayout, AreaResolver } from 'sliced-areas'
+import type { AreasLayout, AreaResolver, AreaResolverResult, AreaId } from 'sliced-areas'
 
 const layout: AreasLayout = { ... }
-const resolver: AreaResolver = (tag) => { ... }
+const resolver: AreaResolver = (tag: string, areaId: AreaId): AreaResolverResult => { ... }
 ```

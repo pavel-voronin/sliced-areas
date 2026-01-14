@@ -85,10 +85,13 @@ const layout = ref({
   ],
 })
 
-const resolveArea = (tag) => {
+const resolveArea = (tag, areaId) => {
   const div = document.createElement('div')
   div.textContent = tag
-  return div
+  return {
+    element: div,
+    cleanup: () => console.log(`Cleanup ${areaId}`)
+  }
 }
 </script>
 

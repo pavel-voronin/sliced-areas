@@ -111,7 +111,7 @@ Vue 3.5+ is required only if you're using the Vue wrapper component. It's declar
 Sliced Areas is written in TypeScript and includes full type definitions. No additional `@types` packages needed.
 
 ```ts
-import type { AreasLayout, AreaResolver, SlicedAreasElement } from 'sliced-areas'
+import type { AreasLayout, AreaResolver, AreaResolverResult, SlicedAreasElement } from 'sliced-areas'
 import type { SlicedAreas } from 'sliced-areas/vue'
 ```
 

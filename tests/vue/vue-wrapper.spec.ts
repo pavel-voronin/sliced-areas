@@ -34,7 +34,7 @@ describe('SlicedAreas Vue wrapper', () => {
       ],
     }
 
-    const resolver: AreaResolver = () => document.createElement('div')
+    const resolver: AreaResolver = (_tag) => document.createElement('div')
     const operations: SlicedAreasOperationsConfig = { disable: ['swap'] }
     const state = reactive<{
       layout: AreasLayout | null
@@ -65,7 +65,7 @@ describe('SlicedAreas Vue wrapper', () => {
     expect(element?.layout?.areas[0]?.tag).toBe('main')
     expect(element?.operations).toEqual(operations)
 
-    const updatedResolver = vi.fn<AreaResolver>(() => document.createElement('div'))
+    const updatedResolver = vi.fn<AreaResolver>((_tag) => document.createElement('div'))
     const setResolverSpy = vi.spyOn(element as SlicedAreasElement, 'setResolver')
     state.resolver = updatedResolver
     await nextTick()

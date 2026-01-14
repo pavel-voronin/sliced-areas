@@ -2,6 +2,12 @@
 
 This section summarizes the changes shipped in each release. It mirrors `CHANGELOG.md` and expands the notes with a short description of what each update means for users.
 
+## 2.1.0
+
+- Expanded resolver API to include `areaId` and optional cleanup callbacks for teardown.
+- Fixed declarative tag updates that left stale DOM nodes in place.
+- Updated tests and documentation to cover resolver cleanup and new API shape.
+
 ## 2.0.0
 
 - Added stable area IDs to the serialized layout, preserving DOM nodes across updates and preventing context loss (WebGL/Teleport).

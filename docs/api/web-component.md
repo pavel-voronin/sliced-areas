@@ -101,15 +101,18 @@ setResolver(resolver: AreaResolver | null): void
 
 **Parameters:**
 
-- `resolver`: Function that creates content for each area tag, or `null` to clear
+- `resolver`: Function that creates content for each area tag (and area id), or `null` to clear
 
 **Example:**
 
 ```js
-element.setResolver((tag) => {
+element.setResolver((tag, areaId) => {
   const div = document.createElement('div')
   div.textContent = `Area: ${tag}`
-  return div
+  return {
+    element: div,
+    cleanup: () => console.log(`Cleanup ${areaId}`)
+  }
 })
 
 // Clear resolver
@@ -461,6 +464,7 @@ import type {
   AreasLayout,
   AreasGraph,
   AreaResolver,
+  AreaResolverResult,
   AreaId,
   AreaTag,
   AreaRect,
@@ -477,10 +481,10 @@ const layout: AreasLayout = {
   ]
 }
 
-const resolver: AreaResolver = (tag: AreaTag): HTMLElement | null => {
+const resolver: AreaResolver = (tag: AreaTag, areaId: AreaId): AreaResolverResult => {
   const div = document.createElement('div')
   div.textContent = tag
-  return div
+  return { element: div, cleanup: () => console.log(`Cleanup ${areaId}`) }
 }
 
 el.layout = layout

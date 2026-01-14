@@ -11,6 +11,7 @@ import type {
   AreasLayout,
   AreasGraph,
   AreaResolver,
+  AreaResolverResult,
   AreaId,
   AreaTag,
   AreaRect,
@@ -30,6 +31,7 @@ import type {
 import type {
   AreasLayout,
   AreaResolver,
+  AreaResolverResult,
   // ... all Web Component types
 } from 'sliced-areas/vue'
 ```
@@ -214,31 +216,60 @@ type GraphArea = {
 
 ## Function Types
 
+### `AreaResolverResult`
+
+Content resolver return type.
+
+```ts
+type AreaResolverResult =
+  | HTMLElement
+  | {
+      element: HTMLElement
+      cleanup?: () => void
+    }
+  | null
+  | undefined
+```
+
+**Notes:**
+
+- When you return `{ element, cleanup }`, the cleanup callback runs when the area is removed or replaced.
+- Returning `null` or `undefined` skips resolving content for that call.
+
 ### `AreaResolver`
 
 Content resolver function.
 
 ```ts
-type AreaResolver = (tag: AreaTag) => HTMLElement | null | undefined
+type AreaResolver = {
+  (tag: AreaTag, areaId: AreaId): AreaResolverResult
+  (tag: AreaTag): AreaResolverResult
+}
 ```
 
 **Parameters:**
 
 - `tag`: The area tag to resolve
+- `areaId`: Stable identifier for the specific area instance
 
 **Returns:**
 
-- `HTMLElement`: Content to display in the area
+- `HTMLElement` or `{ element, cleanup }`: Content to display in the area
 - `null` or `undefined`: Skip rendering for this tag
 
 **Example:**
 
 ```ts
-const resolver: AreaResolver = (tag: AreaTag): HTMLElement | null => {
+const resolver: AreaResolver = (tag: AreaTag, areaId: AreaId): AreaResolverResult => {
   if (tag === 'editor') {
     const textarea = document.createElement('textarea')
     textarea.style.cssText = 'width: 100%; height: 100%;'
-    return textarea
+    return {
+      element: textarea,
+      cleanup: () => {
+        console.log(`Dispose editor for ${areaId}`)
+      },
+    }
   }
 
   if (tag === 'preview') {
@@ -453,14 +484,14 @@ type MyTags = ExtractTags<MyLayout> // 'editor' | 'preview'
 ### Typed resolver
 
 ```ts
-type TypedResolver<T extends string> = (tag: T) => HTMLElement | null
+type TypedResolver<T extends string> = (tag: T, areaId: AreaId) => AreaResolverResult
 
 // Usage
 type MyTags = 'editor' | 'preview'
-const resolver: TypedResolver<MyTags> = (tag) => {
+const resolver: TypedResolver<MyTags> = (tag, areaId) => {
   // tag is strongly typed as 'editor' | 'preview'
   switch (tag) {
-    case 'editor': return createEditor()
+    case 'editor': return { element: createEditor(), cleanup: () => disposeEditor(areaId) }
     case 'preview': return createPreview()
   }
 }
@@ -475,6 +506,8 @@ import type {
   SlicedAreasElement,
   AreasLayout,
   AreaResolver,
+  AreaResolverResult,
+  AreaId,
   CornerClickDetail
 } from 'sliced-areas'
 
@@ -503,10 +536,10 @@ class MyApp {
   }
 
   private createResolver(): AreaResolver {
-    return (tag: string): HTMLElement | null => {
+    return (tag: string, areaId: AreaId): AreaResolverResult => {
       const div = document.createElement('div')
       div.textContent = `Area: ${tag}`
-      return div
+      return { element: div, cleanup: () => console.log(`Cleanup ${areaId}`) }
     }
   }
 
@@ -537,9 +570,9 @@ const layout = ref<AreasLayout>({
   ]
 })
 
-const resolveArea: AreaResolver = (tag: string): HTMLElement | null => {
+const resolveArea: AreaResolver = (tag: string, areaId: string) => {
   const div = document.createElement('div')
-  div.textContent = tag
+  div.textContent = `${tag} (${areaId})`
   return div
 }
 
