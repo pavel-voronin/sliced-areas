@@ -341,6 +341,8 @@ const resolver = (tag, _areaId) => {
 }
 ```
 
+When using `{ element, cleanup }`, ensure `element` is an `HTMLElement`; non-elements are treated as `null`.
+
 ### 3. Persist Layouts
 
 Save user layouts for better UX:

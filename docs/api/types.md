@@ -234,6 +234,7 @@ type AreaResolverResult =
 **Notes:**
 
 - When you return `{ element, cleanup }`, the cleanup callback runs when the area is removed or replaced.
+- The `element` field must be an `HTMLElement`; non-elements are treated as `null`.
 - Returning `null` or `undefined` skips resolving content for that call.
 
 ### `AreaResolver`

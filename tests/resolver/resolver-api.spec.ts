@@ -245,6 +245,17 @@ describe('sliced-areas resolver API', () => {
     expect(placeholder).not.toBeNull()
   })
 
+  it('treats resolver objects with non-elements as missing content', () => {
+    const el = setupElement()
+    el.setResolver(() => ({
+      element: undefined as unknown as HTMLElement,
+    }))
+
+    expect(() => {
+      el.layout = layoutSingle()
+    }).toThrow(/Missing area content detected/)
+  })
+
   it('keeps cleanup callbacks after swap', () => {
     const el = setupElement()
     const cleanups = new Map<string, ReturnType<typeof vi.fn>>()

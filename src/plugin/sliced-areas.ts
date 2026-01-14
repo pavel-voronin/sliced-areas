@@ -1189,6 +1189,9 @@ export class SlicedAreasElement extends HTMLElement {
 
     if (typeof result === 'object' && 'element' in result) {
       const { element, cleanup } = result
+      if (!(element instanceof HTMLElement)) {
+        return null
+      }
       if (cleanup && typeof cleanup === 'function') {
         this.cleanupCallbacks.set(areaId, cleanup)
       }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- Guarded resolver object results to avoid crashes when `element` is missing or not an `HTMLElement`.
+
 ## 2.1.0
 
 - Expanded resolver API to provide `areaId` and support optional cleanup callbacks for area teardown.

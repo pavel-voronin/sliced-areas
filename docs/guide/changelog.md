@@ -2,6 +2,10 @@
 
 This section summarizes the changes shipped in each release. It mirrors `CHANGELOG.md` and expands the notes with a short description of what each update means for users.
 
+## 2.1.1
+
+- Guarded resolver object results to avoid crashes when `element` is missing or not an `HTMLElement`.
+
 ## 2.1.0
 
 - Expanded resolver API to include `areaId` and optional cleanup callbacks for teardown.
